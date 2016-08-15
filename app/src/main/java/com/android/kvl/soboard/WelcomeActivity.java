@@ -118,6 +118,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 } else {
+                    Log.d(LOG_TAG, "permission to write settings already granted");
                     //startBoardingPassActivity();
                     Intent displayImage = new Intent(this, BoardingPassActivity.class);
                     displayImage.putExtra(BOARDING_PASS_EXTRA, data);

@@ -5,12 +5,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,8 +43,11 @@ public class BoardingPassActivity extends AppCompatActivity {
      * and a change of the status and navigation bar.
      */
     private static final int UI_ANIMATION_DELAY = 300;
+
+    private static final String LOG_TAG = "BoardingPassActivity";
+
     private final Handler mHideHandler = new Handler();
-    //private View mContentView;
+
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -99,12 +104,16 @@ public class BoardingPassActivity extends AppCompatActivity {
     Activity context = this;
 
     void adjustBrightness() {
-        Settings.System.putInt(context.getContentResolver(),
-                Settings.System.SCREEN_BRIGHTNESS, 20);
+        if(Settings.System.canWrite(context)) {
+            Settings.System.putInt(context.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS, 20);
 
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenBrightness =0.2f;// 100 / 100.0f;
-        getWindow().setAttributes(lp);
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.screenBrightness = 0.2f;// 100 / 100.0f;
+            getWindow().setAttributes(lp);
+        } else {
+            Log.d(LOG_TAG, "Not allowed to adjust brightness");
+        }
     }
 
     @Override
@@ -113,15 +122,6 @@ public class BoardingPassActivity extends AppCompatActivity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         adjustBrightness();
-
-        /*Settings.System.putInt(this.getContentResolver(),
-                Settings.System.SCREEN_BRIGHTNESS, 20);
-
-        WindowManager.LayoutParams lp = getWindow().getAttributes();
-        lp.screenBrightness =0.2f;// 100 / 100.0f;
-        getWindow().setAttributes(lp);
-
-        startActivity(new Intent(this, RefreshScreen.class));*/
 
         setContentView(R.layout.activity_boarding_pass);
         ActionBar actionBar = getSupportActionBar();
@@ -132,14 +132,21 @@ public class BoardingPassActivity extends AppCompatActivity {
         Intent input = getIntent();
         Intent data = input.getParcelableExtra(WelcomeActivity.BOARDING_PASS_EXTRA);
 
+        imageView = (ImageView) findViewById(R.id.boardingPassImageView);
 
         try {
             boardingPass = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(data.getData()));
+            if(boardingPass.getWidth() > boardingPass.getHeight()) {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(90);
+                boardingPass = Bitmap.createScaledBitmap(boardingPass,boardingPass.getWidth(),boardingPass.getHeight(),true);
+                boardingPass = Bitmap.createBitmap(boardingPass, 0, 0, boardingPass.getWidth(), boardingPass.getHeight(), matrix, true);
+            }
+            imageView.setImageBitmap(boardingPass);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        imageView = (ImageView) findViewById(R.id.boardingPassImageView);
-        imageView.setImageBitmap(boardingPass);
+
         imageView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -149,16 +156,6 @@ public class BoardingPassActivity extends AppCompatActivity {
 
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
-        /*mContentView = findViewById(R.id.fullscreen_content);
-
-
-        // Set up the user interaction to manually show or hide the system UI.
-        mContentView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                toggle();
-            }
-        });*/
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
