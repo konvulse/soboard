@@ -47,7 +47,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();*/
 
-                if(PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                     ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
                     Log.d(LOG_TAG, "requesting permissions to write external storage");
                 } else {
@@ -58,6 +58,17 @@ public class WelcomeActivity extends AppCompatActivity {
         });
 
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
+
+        if(!Settings.System.canWrite(context)) {
+            //ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_SETTINGS}, REQUEST_WRITE_SETTINGS);
+            Log.d(LOG_TAG, "requesting permissions to write settings");
+            Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+            intent.setData(Uri.parse("package:" + context.getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } else {
+            Log.d(LOG_TAG, "permission to write settings already granted");
+        }
     }
 
     void getImage() {
@@ -67,13 +78,7 @@ public class WelcomeActivity extends AppCompatActivity {
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
     }
-
-    /*void startBoardingPassActivity() {
-        Intent displayImage = new Intent(this, BoardingPassActivity.class);
-        displayImage.putExtra(BOARDING_PASS_EXTRA, data);
-        startActivity(displayImage);
-    }*/
-
+    
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -104,27 +109,15 @@ public class WelcomeActivity extends AppCompatActivity {
         // Check which request we're responding to
         switch (requestCode) {
             case PICK_IMAGE:
-                //images.
-                //boardingPassListView.
                 if(data == null) {
+                    Log.d(LOG_TAG, "activity finished with no image selected");
                     return;
                 }
 
-                if(!Settings.System.canWrite(context)) {
-                    //ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_SETTINGS}, REQUEST_WRITE_SETTINGS);
-                    Log.d(LOG_TAG, "requesting permissions to write settings");
-                    Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                    intent.setData(Uri.parse("package:" + context.getPackageName()));
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                } else {
-                    Log.d(LOG_TAG, "permission to write settings already granted");
-                    //startBoardingPassActivity();
-                    Intent displayImage = new Intent(this, BoardingPassActivity.class);
-                    displayImage.putExtra(BOARDING_PASS_EXTRA, data);
-                    startActivity(displayImage);
-                }
-
+                //startBoardingPassActivity();
+                Intent displayImage = new Intent(this, BoardingPassActivity.class);
+                displayImage.putExtra(BOARDING_PASS_EXTRA, data);
+                startActivity(displayImage);
 
             default:
                 break;
