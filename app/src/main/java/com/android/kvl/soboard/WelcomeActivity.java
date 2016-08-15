@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -59,16 +60,24 @@ public class WelcomeActivity extends AppCompatActivity {
 
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
 
-        if(!Settings.System.canWrite(context)) {
-            //ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_SETTINGS}, REQUEST_WRITE_SETTINGS);
-            Log.d(LOG_TAG, "requesting permissions to write settings");
-            Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
-            intent.setData(Uri.parse("package:" + context.getPackageName()));
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            if(!Settings.System.canWrite(context)) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                intent.setData(Uri.parse("package:" + context.getPackageName()));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } else {
+                Log.d(LOG_TAG, "permission to write settings already granted");
+            }
         } else {
-            Log.d(LOG_TAG, "permission to write settings already granted");
+            if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_SETTINGS)) {
+                ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_SETTINGS}, REQUEST_WRITE_SETTINGS);
+                Log.d(LOG_TAG, "requesting permissions to write settings");
+            } else {
+                Log.d(LOG_TAG, "write settings permission already granted");
+            }
         }
+
     }
 
     void getImage() {
@@ -78,7 +87,7 @@ public class WelcomeActivity extends AppCompatActivity {
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
     }
-    
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {

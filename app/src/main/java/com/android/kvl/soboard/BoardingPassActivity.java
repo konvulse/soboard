@@ -1,15 +1,19 @@
 package com.android.kvl.soboard;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -104,7 +108,13 @@ public class BoardingPassActivity extends AppCompatActivity {
     Activity context = this;
 
     void adjustBrightness() {
-        if(Settings.System.canWrite(context)) {
+        Boolean canWrite;
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            canWrite = Settings.System.canWrite(context);
+        } else {
+            canWrite = PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_SETTINGS);
+        }
+        if(canWrite) {
             Settings.System.putInt(context.getContentResolver(),
                     Settings.System.SCREEN_BRIGHTNESS, 20);
 
