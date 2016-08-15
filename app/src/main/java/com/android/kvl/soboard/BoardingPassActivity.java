@@ -1,17 +1,20 @@
 package com.android.kvl.soboard;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import java.io.FileNotFoundException;
@@ -93,10 +96,23 @@ public class BoardingPassActivity extends AppCompatActivity {
 
     Bitmap boardingPass;
     ImageView imageView;
+    Activity context = this;
+
+    void adjustBrightness() {
+        Settings.System.putInt(context.getContentResolver(),
+                Settings.System.SCREEN_BRIGHTNESS, 20);
+
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.screenBrightness =0.2f;// 100 / 100.0f;
+        getWindow().setAttributes(lp);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        adjustBrightness();
 
         /*Settings.System.putInt(this.getContentResolver(),
                 Settings.System.SCREEN_BRIGHTNESS, 20);
