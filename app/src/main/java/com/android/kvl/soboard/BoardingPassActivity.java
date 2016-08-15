@@ -116,10 +116,12 @@ public class BoardingPassActivity extends AppCompatActivity {
         }
         if(canWrite) {
             Settings.System.putInt(context.getContentResolver(),
-                    Settings.System.SCREEN_BRIGHTNESS, 20);
+                    Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+            Settings.System.putInt(context.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS, 255);
 
             WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.screenBrightness = 0.2f;// 100 / 100.0f;
+            lp.screenBrightness = 1.f;
             getWindow().setAttributes(lp);
         } else {
             Log.d(LOG_TAG, "Not allowed to adjust brightness");
