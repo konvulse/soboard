@@ -60,6 +60,10 @@ public class WelcomeActivity extends AppCompatActivity {
 
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
 
+        requestPermissionWriteSettings();
+    }
+
+    void requestPermissionWriteSettings() {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             if(!Settings.System.canWrite(context)) {
                 Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
@@ -77,7 +81,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 Log.d(LOG_TAG, "write settings permission already granted");
             }
         }
-
     }
 
     void getImage() {
