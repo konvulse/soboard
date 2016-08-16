@@ -1,22 +1,16 @@
 package com.android.kvl.soboard;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -106,34 +100,15 @@ public class BoardingPassActivity extends AppCompatActivity {
     Activity context = this;
 
     void adjustBrightness() {
-        Boolean canWrite;
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            canWrite = Settings.System.canWrite(context);
-        } else {
-            canWrite = PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_SETTINGS);
-        }
-        if(canWrite) {
-            Settings.System.putInt(context.getContentResolver(),
-                    Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-            Settings.System.putInt(context.getContentResolver(),
-                    Settings.System.SCREEN_BRIGHTNESS, 255);
-
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.screenBrightness = 1.f;
-            getWindow().setAttributes(lp);
-        } else {
-            Log.d(LOG_TAG, "Not allowed to adjust brightness");
-        }
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL;
+        getWindow().setAttributes(lp);
     }
 
     void hideStatusBar() {
         View decorView = getWindow().getDecorView();
-// Hide the status bar.
         int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
         decorView.setSystemUiVisibility(uiOptions);
-// Remember that you should never show the action bar if the
-// status bar is hidden, so hide that too if necessary.
-        //getActionBar().hide();
     }
 
     @Override
@@ -141,7 +116,6 @@ public class BoardingPassActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         hideStatusBar();
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         adjustBrightness();
 

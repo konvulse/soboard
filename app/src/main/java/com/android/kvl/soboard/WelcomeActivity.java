@@ -4,10 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -26,7 +23,6 @@ public class WelcomeActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE = 1;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
-    private static final int REQUEST_WRITE_SETTINGS = 3;
 
     ListView boardingPassListView;
     static final String BOARDING_PASS_EXTRA = "com.android.kvl.soboard.boarding_pass";
@@ -59,28 +55,6 @@ public class WelcomeActivity extends AppCompatActivity {
         });
 
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
-
-        requestPermissionWriteSettings();
-    }
-
-    void requestPermissionWriteSettings() {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            if(!Settings.System.canWrite(context)) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                intent.setData(Uri.parse("package:" + context.getPackageName()));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-            } else {
-                Log.d(LOG_TAG, "permission to write settings already granted");
-            }
-        } else {
-            if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_SETTINGS)) {
-                ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_SETTINGS}, REQUEST_WRITE_SETTINGS);
-                Log.d(LOG_TAG, "requesting permissions to write settings");
-            } else {
-                Log.d(LOG_TAG, "write settings permission already granted");
-            }
-        }
     }
 
     void getImage() {
@@ -102,15 +76,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 } else {
                     Log.d(LOG_TAG, "WRITE_EXTERNAL_STORAGE permission denied");
                 }
-
-                break;
-            case REQUEST_WRITE_SETTINGS:
-                if ((grantResults.length > 0) && (grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    Log.d(LOG_TAG, "WRITE_SETTINGS permission granted");
-                } else {
-                    Log.d(LOG_TAG, "WRITE_SETTINGS permission denied");
-                }
-                //startBoardingPassActivity();
                 break;
             default:
                 break;
