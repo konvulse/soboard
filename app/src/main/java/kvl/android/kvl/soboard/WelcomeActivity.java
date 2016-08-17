@@ -91,11 +91,9 @@ public class WelcomeActivity extends AppCompatActivity {
                     return;
                 }
 
-                //startBoardingPassActivity();
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, data);
                 startActivity(displayImage);
-
             default:
                 break;
         }
