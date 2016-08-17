@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.2"
 
     defaultConfig {
-        applicationId "com.android.kvl.soboard"
+        applicationId "kvl.android.kvl.soboard"
         minSdkVersion 15
         targetSdkVersion 23
         versionCode 1

@@ -1,4 +1,4 @@
-package com.android.kvl.soboard;
+package kvl.android.kvl.soboard;
 
 import android.Manifest;
 import android.app.Activity;
@@ -25,7 +25,7 @@ public class WelcomeActivity extends AppCompatActivity {
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE = 2;
 
     ListView boardingPassListView;
-    static final String BOARDING_PASS_EXTRA = "com.android.kvl.soboard.boarding_pass";
+    static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
 
     //ArrayAdapter<> images;
     final Activity context = this;

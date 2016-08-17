@@ -1,4 +1,4 @@
-package com.android.kvl.soboard;
+package kvl.android.kvl.soboard;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
