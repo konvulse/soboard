@@ -30,6 +30,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
     ListView boardingPassListView;
     static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
+    static final String SAVED_IMAGE_LIST = "kvl.android.kvl.soboard.savedImages";
 
     ArrayList<ImageListItem> images;
     ImageListAdapter imageAdapter;
@@ -65,6 +66,23 @@ public class WelcomeActivity extends AppCompatActivity {
         boardingPassListView.setAdapter(imageAdapter);
 
         initializeImageListClickListener();
+
+        if(!(savedInstanceState == null || savedInstanceState.isEmpty())) {
+            rebuildFromBundle(savedInstanceState);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putParcelableArrayList(SAVED_IMAGE_LIST, imageAdapter.getArrayList());
+    }
+
+    private void rebuildFromBundle(Bundle state) {
+        ArrayList<ImageListItem> savedImages = state.getParcelableArrayList(SAVED_IMAGE_LIST);
+        for(ImageListItem image: savedImages) {
+            imageAdapter.add(image);
+        }
     }
 
     private void initializeImageListClickListener() {

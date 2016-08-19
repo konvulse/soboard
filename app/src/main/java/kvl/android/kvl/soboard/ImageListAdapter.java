@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 /**
  * Created by kvl on 8/19/16.
  */
@@ -32,5 +34,13 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
         }
 
         return v;
+    }
+
+    public ArrayList<ImageListItem> getArrayList() {
+        ArrayList<ImageListItem> images = new ArrayList<>();
+        for(int i = 0; i < this.getCount(); ++i) {
+            images.add(this.getItem(i));
+        }
+        return images;
     }
 }
