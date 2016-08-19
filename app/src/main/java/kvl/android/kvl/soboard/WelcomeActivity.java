@@ -15,7 +15,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+
+import java.util.ArrayList;
 
 public class WelcomeActivity extends AppCompatActivity {
 
@@ -27,6 +31,8 @@ public class WelcomeActivity extends AppCompatActivity {
     ListView boardingPassListView;
     static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
 
+    ArrayList<ImageListItem> images;
+    ImageListAdapter imageAdapter;
     final Activity context = this;
 
     @Override
@@ -53,7 +59,24 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
 
+        images = new ArrayList<>();
+        imageAdapter = new ImageListAdapter(context, R.layout.image_list_item);
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
+        boardingPassListView.setAdapter(imageAdapter);
+
+        initializeImageListClickListener();
+    }
+
+    private void initializeImageListClickListener() {
+        boardingPassListView.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent displayImage = new Intent(context, BoardingPassActivity.class);
+                displayImage.putExtra(BOARDING_PASS_EXTRA, imageAdapter.getItem(position).getUri());
+                startActivity(displayImage);
+            }
+        });
     }
 
     void getImage() {
@@ -90,8 +113,10 @@ public class WelcomeActivity extends AppCompatActivity {
                     return;
                 }
 
+                images.add(new ImageListItem(data.getData()));
+                imageAdapter.add(new ImageListItem(data.getData()));
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);
-                displayImage.putExtra(BOARDING_PASS_EXTRA, data);
+                displayImage.putExtra(BOARDING_PASS_EXTRA, data.getData());
                 startActivity(displayImage);
             default:
                 break;
