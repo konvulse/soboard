@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 public class WelcomeActivity extends AppCompatActivity {
@@ -27,7 +28,7 @@ public class WelcomeActivity extends AppCompatActivity {
     ListView boardingPassListView;
     static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
 
-    //ArrayAdapter<> images;
+    ArrayAdapter<Intent> images;
     final Activity context = this;
 
     @Override
@@ -90,7 +91,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     Log.d(LOG_TAG, "activity finished with no image selected");
                     return;
                 }
-
+                images.add(data);
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, data);
                 startActivity(displayImage);
