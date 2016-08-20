@@ -131,8 +131,8 @@ public class WelcomeActivity extends AppCompatActivity {
                     return;
                 }
 
-                images.add(new ImageListItem(data.getData()));
-                imageAdapter.add(new ImageListItem(data.getData()));
+                images.add(new ImageListItem(data.getData(), context));
+                imageAdapter.add(new ImageListItem(data.getData(), context));
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, data.getData());
                 startActivity(displayImage);
