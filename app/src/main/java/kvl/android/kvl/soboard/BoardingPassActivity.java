@@ -117,6 +117,7 @@ public class BoardingPassActivity extends AppCompatActivity {
 
         hideStatusBar();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         adjustBrightness();
 
         setContentView(R.layout.activity_boarding_pass);
