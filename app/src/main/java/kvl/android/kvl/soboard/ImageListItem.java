@@ -29,8 +29,8 @@ public final class ImageListItem implements Parcelable {
     private String imageName;
     private Bitmap imageBitmap;
     private Context context;
-    private String flightNumber;
-    private String airline;
+    private String flightNumber = "unknown";
+    private String airline = "unknown";
     private String departureTime;
 
     private static final String LOG_TAG = "ImageListItem";
@@ -62,10 +62,17 @@ public final class ImageListItem implements Parcelable {
     }
 
     public String getName() {
-        String name = imageName;
-        if (flightNumber != "unknown") {
-            name = "Flight " + flightNumber;
+        String name = "";
+        if (!airline.equals("unknown")) {
+            name += airline + " ";
         }
+        if (!flightNumber.equals("unknown")) {
+            name += "Flight " + flightNumber + " ";
+        }
+        if(name.isEmpty()) {
+            name = imageName;
+        }
+        name = name.trim();
         return name;
     }
 
@@ -115,7 +122,6 @@ public final class ImageListItem implements Parcelable {
         if (!(new File(DATA_PATH + "tessdata/" + lang + ".traineddata")).exists()) {
             try {
                 AssetManager assetManager = context.getAssets();
-                String[] files = assetManager.list("");
                 InputStream in = assetManager.open("tessdata/" + lang + ".traineddata");
                 //GZIPInputStream gin = new GZIPInputStream(in);
                 OutputStream out = new FileOutputStream(DATA_PATH
@@ -139,7 +145,18 @@ public final class ImageListItem implements Parcelable {
         }
     }
 
-    private String findFlightNumber(String line) {
+    private String findAirline(String[] lines) {
+        for(String line : lines) {
+            if (line.contains("Southwest")) {
+                return "Southwest";
+            } else if (line.contains("American")) {
+                return "American";
+            }
+        }
+        return "unknown";
+    }
+
+    private String findSouthwestFlightNumber(String line) {
         String flightNumber = "unknown";
         String[] words = line.split(" ");
         if (words.length == 2) {
@@ -149,7 +166,7 @@ public final class ImageListItem implements Parcelable {
         return flightNumber;
     }
 
-    private String findDepartureTime(String line) {
+    private String findSouthwestDepartureTime(String line) {
         String departureTime = "unknown";
         String[] words = line.split(" ");
         if(words.length > 1) {
@@ -159,17 +176,61 @@ public final class ImageListItem implements Parcelable {
         return departureTime;
     }
 
-    private void findInfo(String recognizedText) {
-        String[] lines = recognizedText.split("\\r?\\n");
+    private void findSouthwestInfo(String[] lines) {
         for(String line : lines) {
             if(line.contains("Flight")) {
-                flightNumber = findFlightNumber(line);
+                flightNumber = findSouthwestFlightNumber(line);
             } else if (line.contains("Depart")) {
-                departureTime = findDepartureTime(line);
+                departureTime = findSouthwestDepartureTime(line);
+            }
+        }
+    }
+
+    private String findAmericanFlightNumber(String keyLine, String valueLine) {
+        String flightNumber = "unknown";
+        String[] words = valueLine.split(" ");
+
+        if(words.length >= 2) {
+            flightNumber = words[1];
+            if(flightNumber.contains("AA")) {
+                flightNumber = flightNumber.substring(2);
             }
         }
 
+        return flightNumber;
     }
+
+    private String findAmericanDepartureTime(String line) {
+        String departureTime = "unknown";
+        String[] words = line.split(" ");
+        if(words.length > 1) {
+            departureTime = words[1];
+        }
+
+        return departureTime;
+    }
+    private void findAmericanInfo(String[] lines) {
+        int lineIndex = 0;
+        for(String line : lines) {
+            if(line.contains("Flight")) {
+                flightNumber = findAmericanFlightNumber(line, lines[lineIndex + 1]);
+            } else if (line.contains("Depart")) {
+                departureTime = findAmericanDepartureTime(line);
+            }
+            ++lineIndex;
+        }
+    }
+
+    private void findFlightInfo(String recognizedText) {
+        String[] lines = recognizedText.split("\\r?\\n");
+        airline = findAirline(lines);
+        if(airline.equals("Southwest")) {
+            findSouthwestInfo(lines);
+        } else if (airline.equals("American")) {
+            findAmericanInfo(lines);
+        }
+    }
+
     private void performOcr() {
         /*
         FOR NOW ASSUME THE IMAGE IS NOT ROTATED
@@ -189,6 +250,6 @@ public final class ImageListItem implements Parcelable {
         String recognizedText = baseApi.getUTF8Text();
         Log.v(LOG_TAG, recognizedText);
 
-        findInfo(recognizedText);
+        findFlightInfo(recognizedText);
     }
 }
