@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class WelcomeActivity extends AppCompatActivity {
     static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
     static final String SAVED_IMAGE_LIST = "kvl.android.kvl.soboard.savedImages";
 
-    ArrayList<ImageListItem> images;
+    //ArrayList<ImageListItem> images;
     ImageListAdapter imageAdapter;
     final Activity context = this;
 
@@ -60,12 +61,13 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
 
-        images = new ArrayList<>();
+        //images = new ArrayList<>();
         imageAdapter = new ImageListAdapter(context, R.layout.image_list_item);
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
         boardingPassListView.setAdapter(imageAdapter);
 
         initializeImageListClickListener();
+        initializeImageListLongClickListener();
 
         if(!(savedInstanceState == null || savedInstanceState.isEmpty())) {
             rebuildFromBundle(savedInstanceState);
@@ -93,6 +95,16 @@ public class WelcomeActivity extends AppCompatActivity {
                 Intent displayImage = new Intent(context, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, imageAdapter.getItem(position).getUri());
                 startActivity(displayImage);
+            }
+        });
+    }
+
+    private void initializeImageListLongClickListener() {
+        boardingPassListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                return imageAdapter.makeEditable(parent, view, position, id);
+                //return true;
             }
         });
     }
@@ -130,9 +142,9 @@ public class WelcomeActivity extends AppCompatActivity {
                     Log.d(LOG_TAG, "activity finished with no image selected");
                     return;
                 }
-
-                images.add(new ImageListItem(data.getData(), context));
-                imageAdapter.add(new ImageListItem(data.getData(), context));
+                ImageListItem newItem = new ImageListItem(data.getData(), context);
+                //images.add(newItem);
+                imageAdapter.add(newItem);
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, data.getData());
                 startActivity(displayImage);
