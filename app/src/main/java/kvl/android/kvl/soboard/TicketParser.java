@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -22,7 +23,19 @@ import java.io.OutputStream;
 /**
  * Created by kvl on 10/16/16.
  */
-public class TicketParser {
+public class TicketParser extends AsyncTask {
+
+    private String departureTime;
+    private String recognizedText;
+    private Context context;
+    private Bitmap imageBitmap;
+    private String imageName;
+    private static final String LOG_TAG = "TicketParser";
+    private static final String DATA_PATH = Environment
+            .getExternalStorageDirectory().toString() + "/soboard/";
+    private static final String lang = "eng";
+    ImageListAdapter listAdapter;
+
     public String getFlightNumber() {
         return flightNumber;
     }
@@ -39,30 +52,17 @@ public class TicketParser {
         return departureTime;
     }
 
-    private String departureTime;
-
-    private static final String LOG_TAG = "TicketParser";
-
-    public static final String DATA_PATH = Environment
-            .getExternalStorageDirectory().toString() + "/soboard/";
-    public static final String lang = "eng";
-
-    private Context context;
-
     public Bitmap getImageBitmap() {
         return imageBitmap;
     }
 
-    private Bitmap imageBitmap;
 
     public String getImageName() {
         return imageName;
     }
 
-    private String imageName;
-
-    public TicketParser(Context context, Uri imageUri) {
-
+    public TicketParser(Context context, Uri imageUri, ImageListAdapter listAdapter) {
+        this.listAdapter = listAdapter;
         this.context = context;
         Cursor imageCursor = context.getContentResolver().query(imageUri, null, null, null, null);
         int nameIndex = imageCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
@@ -74,8 +74,21 @@ public class TicketParser {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        initializeOcr();
     }
+
+    @Override
+    protected Object doInBackground(Object[] params) {
+        initializeOcr();
+        performOcr();
+        return null;
+    }
+
+    @Override
+    protected void onPostExecute(Object result) {
+        Log.d(LOG_TAG, "Should update list");
+        listAdapter.notifyDataSetChanged();
+    }
+
     private void initializeOcr() {
         String[] paths = new String[] { DATA_PATH, DATA_PATH + "tessdata/"};
 
@@ -219,7 +232,7 @@ public class TicketParser {
         baseApi.init(DATA_PATH, lang);
         baseApi.setImage(imageBitmap);
 
-        String recognizedText = baseApi.getUTF8Text();
+        recognizedText = baseApi.getUTF8Text();
         Log.v(LOG_TAG, recognizedText);
 
         findFlightInfo(recognizedText);

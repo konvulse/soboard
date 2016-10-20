@@ -23,11 +23,12 @@ public final class ImageListItem implements Parcelable {
 
     private TicketParser ticketInfo;
 
-    public ImageListItem(Uri image, Context context) {
+    public ImageListItem(Uri image, Context context, ImageListAdapter listAdapter) {
         this.context = context;
         this.imageUri = image;
 
-        ticketInfo = new TicketParser(this.context, this.imageUri);
+        ticketInfo = new TicketParser(this.context, this.imageUri, listAdapter);
+        ticketInfo.execute();
     }
 
     public ImageListItem(Parcel in) {

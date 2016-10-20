@@ -142,7 +142,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     Log.d(LOG_TAG, "activity finished with no image selected");
                     return;
                 }
-                ImageListItem newItem = new ImageListItem(data.getData(), context);
+                ImageListItem newItem = new ImageListItem(data.getData(), context, imageAdapter);
                 //images.add(newItem);
                 imageAdapter.add(newItem);
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);

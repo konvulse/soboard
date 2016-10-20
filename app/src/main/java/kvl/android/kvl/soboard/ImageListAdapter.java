@@ -77,6 +77,7 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
                     if (editName.requestFocus()) {
                         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
                         imm.toggleSoftInputFromWindow(editName.getApplicationWindowToken(), InputMethodManager.SHOW_IMPLICIT, 0);
+
                         Log.d(LOG_TAG, "editName took focus");
                     } else {
                         Log.d(LOG_TAG, "editName did not take focus");
@@ -98,7 +99,6 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
                                 return false;
                             }
                         }
-
                     });
                 } else {
                     Log.d(LOG_TAG, "already editing, selecting all");
