@@ -1,6 +1,9 @@
 package kvl.android.kvl.soboard;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Parcel;
@@ -23,24 +26,54 @@ public final class ImageListItem implements Parcelable {
 
     private TicketParser ticketInfo;
 
+    private SQLiteDatabase ticketDb;
+
+    private long recordId;
+
     public ImageListItem(Uri image, Context context, ImageListAdapter listAdapter) {
         this.context = context;
         this.imageUri = image;
 
-        ticketInfo = new TicketParser(this.context, this.imageUri, listAdapter);
+        ticketDb = new TicketInfoHelper(context).getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_IMAGE_URI, imageUri.toString());
+        recordId = ticketDb.insert(DatabaseSchema.TicketInfo.TABLE_NAME, null, values);
+
+        ticketInfo = new TicketParser(this.context, this.imageUri, listAdapter, recordId);
         ticketInfo.execute();
     }
 
     public ImageListItem(Parcel in) {
         readFromParcel(in);
+        ticketDb = new TicketInfoHelper(context).getWritableDatabase();
+    }
+
+    public ImageListItem(Context context, Cursor items) {
+        this.context = context;
+        userDefinedName = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_USER_DEFINED_NAME));
+        recordId = items.getLong(items.getColumnIndex(DatabaseSchema.TicketInfo._ID));
+        imageUri = Uri.parse(items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_IMAGE_URI)));
+
+        String airline = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_AIRLINE));
+        String flightNumber = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_FLIGHT_NUMBER));
+        String departureTime = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_DEPARTURE_TIME));
+
+        ticketInfo = new TicketParser(airline, flightNumber, departureTime);
+        ticketDb = new TicketInfoHelper(this.context).getWritableDatabase();
     }
 
     public void setName(String name) {
+
         if(name != null && !name.isEmpty()) {
             userDefinedName = name.trim();
         } else {
             userDefinedName = null;
         }
+
+        ContentValues values = new ContentValues();
+        values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_USER_DEFINED_NAME, userDefinedName);
+        String query = DatabaseSchema.TicketInfo._ID + " = " + recordId;
+        ticketDb.update(DatabaseSchema.TicketInfo.TABLE_NAME, values, query, null);
     }
 
     public String getName() {

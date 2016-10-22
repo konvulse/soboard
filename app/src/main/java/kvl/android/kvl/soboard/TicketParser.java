@@ -1,8 +1,10 @@
 package kvl.android.kvl.soboard;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -26,6 +28,8 @@ import java.io.OutputStream;
 public class TicketParser extends AsyncTask {
 
     private String departureTime;
+    private String flightNumber = "unknown";
+    private String airline = "unknown";
     private String recognizedText;
     private Context context;
     private Bitmap imageBitmap;
@@ -35,18 +39,16 @@ public class TicketParser extends AsyncTask {
             .getExternalStorageDirectory().toString() + "/soboard/";
     private static final String lang = "eng";
     ImageListAdapter listAdapter;
+    SQLiteDatabase ticketDb;
+    long recordId;
 
     public String getFlightNumber() {
         return flightNumber;
     }
 
-    private String flightNumber = "unknown";
-
     public String getAirline() {
         return airline;
     }
-
-    private String airline = "unknown";
 
     public String getDepartureTime() {
         return departureTime;
@@ -56,14 +58,15 @@ public class TicketParser extends AsyncTask {
         return imageBitmap;
     }
 
-
     public String getImageName() {
         return imageName;
     }
 
-    public TicketParser(Context context, Uri imageUri, ImageListAdapter listAdapter) {
+    public TicketParser(Context context, Uri imageUri, ImageListAdapter listAdapter, long recordId) {
         this.listAdapter = listAdapter;
         this.context = context;
+        this.ticketDb = new TicketInfoHelper(context).getWritableDatabase();
+        this.recordId = recordId;
         Cursor imageCursor = context.getContentResolver().query(imageUri, null, null, null, null);
         int nameIndex = imageCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
         imageCursor.moveToFirst();
@@ -74,6 +77,12 @@ public class TicketParser extends AsyncTask {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+    }
+
+    public TicketParser(String airline, String flightNumber, String departureTime) {
+        this.airline = airline;
+        this.flightNumber = flightNumber;
+        this.departureTime = departureTime;
     }
 
     @Override
@@ -236,5 +245,13 @@ public class TicketParser extends AsyncTask {
         Log.v(LOG_TAG, recognizedText);
 
         findFlightInfo(recognizedText);
+
+        ContentValues values = new ContentValues();
+        values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_AIRLINE, airline);
+        values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_FLIGHT_NUMBER, flightNumber);
+        values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_DEPARTURE_TIME, departureTime);
+        String query = DatabaseSchema.TicketInfo._ID + " = " + recordId;
+        ticketDb.update(DatabaseSchema.TicketInfo.TABLE_NAME, values, query, null);
+
     }
 }
