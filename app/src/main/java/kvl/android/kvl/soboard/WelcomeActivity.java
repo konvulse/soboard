@@ -35,7 +35,6 @@ public class WelcomeActivity extends AppCompatActivity {
     static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
     static final String SAVED_IMAGE_LIST = "kvl.android.kvl.soboard.savedImages";
 
-    //ArrayList<ImageListItem> images;
     ImageListAdapter imageAdapter;
     final Activity context = this;
 
@@ -66,7 +65,6 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
 
-        //images = new ArrayList<>();
         imageAdapter = new ImageListAdapter(context, R.layout.image_list_item);
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
         boardingPassListView.setAdapter(imageAdapter);
@@ -109,6 +107,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                imageAdapter.stopEditing(boardingPassListView);
                 Intent displayImage = new Intent(context, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, imageAdapter.getItem(position).getUri());
                 startActivity(displayImage);
@@ -121,7 +120,6 @@ public class WelcomeActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 return imageAdapter.makeEditable(parent, view, position, id);
-                //return true;
             }
         });
     }
@@ -160,7 +158,6 @@ public class WelcomeActivity extends AppCompatActivity {
                     return;
                 }
                 ImageListItem newItem = new ImageListItem(data.getData(), context, imageAdapter);
-                //images.add(newItem);
                 imageAdapter.add(newItem);
                 Intent displayImage = new Intent(this, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, data.getData());

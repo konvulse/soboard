@@ -27,6 +27,7 @@ import java.io.OutputStream;
  */
 public class TicketParser extends AsyncTask {
 
+    private Uri imageUri;
     private String departureTime;
     private String flightNumber = "unknown";
     private String airline = "unknown";
@@ -39,7 +40,6 @@ public class TicketParser extends AsyncTask {
             .getExternalStorageDirectory().toString() + "/soboard/";
     private static final String lang = "eng";
     ImageListAdapter listAdapter;
-    SQLiteDatabase ticketDb;
     long recordId;
 
     public String getFlightNumber() {
@@ -55,31 +55,39 @@ public class TicketParser extends AsyncTask {
     }
 
     public Bitmap getImageBitmap() {
+        if(imageBitmap == null) {
+            try {
+                imageBitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(imageUri));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
         return imageBitmap;
     }
 
     public String getImageName() {
+        if(imageName == null) {
+            Cursor imageCursor = context.getContentResolver().query(imageUri, null, null, null, null);
+            int nameIndex = imageCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            imageCursor.moveToFirst();
+            imageName = imageCursor.getString(nameIndex);
+        }
         return imageName;
     }
 
     public TicketParser(Context context, Uri imageUri, ImageListAdapter listAdapter, long recordId) {
+        this.imageUri = imageUri;
         this.listAdapter = listAdapter;
         this.context = context;
-        this.ticketDb = new TicketInfoHelper(context).getWritableDatabase();
         this.recordId = recordId;
-        Cursor imageCursor = context.getContentResolver().query(imageUri, null, null, null, null);
-        int nameIndex = imageCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-        imageCursor.moveToFirst();
-        imageName = imageCursor.getString(nameIndex);
 
-        try {
-            imageBitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(imageUri));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        getImageBitmap();
     }
 
-    public TicketParser(String airline, String flightNumber, String departureTime) {
+
+    public TicketParser(Context context, Uri imageUri, String airline, String flightNumber, String departureTime) {
+        this.context = context;
+        this.imageUri = imageUri;
         this.airline = airline;
         this.flightNumber = flightNumber;
         this.departureTime = departureTime;
@@ -226,6 +234,7 @@ public class TicketParser extends AsyncTask {
     }
 
     private void performOcr() {
+        getImageBitmap();
         /*
         FOR NOW ASSUME THE IMAGE IS NOT ROTATED
         if(imageBitmap.getWidth() > imageBitmap.getHeight()) {
@@ -251,7 +260,8 @@ public class TicketParser extends AsyncTask {
         values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_FLIGHT_NUMBER, flightNumber);
         values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_DEPARTURE_TIME, departureTime);
         String query = DatabaseSchema.TicketInfo._ID + " = " + recordId;
-        ticketDb.update(DatabaseSchema.TicketInfo.TABLE_NAME, values, query, null);
 
+        SQLiteDatabase ticketDb = new TicketInfoHelper(context).getWritableDatabase();
+        ticketDb.update(DatabaseSchema.TicketInfo.TABLE_NAME, values, query, null);
     }
 }

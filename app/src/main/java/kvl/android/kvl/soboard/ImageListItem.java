@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Parcel;
@@ -58,13 +59,13 @@ public final class ImageListItem implements Parcelable {
         String flightNumber = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_FLIGHT_NUMBER));
         String departureTime = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_DEPARTURE_TIME));
 
-        ticketInfo = new TicketParser(airline, flightNumber, departureTime);
+        ticketInfo = new TicketParser(this.context, imageUri, airline, flightNumber, departureTime);
         ticketDb = new TicketInfoHelper(this.context).getWritableDatabase();
     }
 
     public void setName(String name) {
 
-        if(name != null && !name.isEmpty()) {
+        if(name != null && !name.isEmpty() && !name.trim().equals(getName())) {
             userDefinedName = name.trim();
         } else {
             userDefinedName = null;
@@ -94,6 +95,26 @@ public final class ImageListItem implements Parcelable {
             name = name.trim();
         }
         return name;
+    }
+
+    public Bitmap getImageBitmap() {
+        return ticketInfo.getImageBitmap();
+    }
+
+    public Bitmap getScaledImageBitmap(int viewWidth, int viewHeight) {
+        Bitmap original = getImageBitmap();
+        int width = viewWidth;
+        int height = viewHeight;
+        float scale;
+        if(original.getHeight() > original.getWidth()) {
+            scale = (float) viewHeight / original.getHeight();
+            width = (int) (scale * original.getWidth());
+        } else {
+            scale = (float) viewWidth / original.getWidth();
+            height = (int) (scale * original.getHeight());
+        }
+
+        return Bitmap.createScaledBitmap(original, width, height, true);
     }
 
     @Override

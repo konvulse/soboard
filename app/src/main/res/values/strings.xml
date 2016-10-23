@@ -5,4 +5,5 @@
     <string name="title_activity_boarding_pass">BoardingPassActivity</string>
     <string name="boarding_pass">boarding pass</string>
     <string name="ticket_name_hint">Enter a custom ticket name</string>
+    <string name="ticket_thumbnail">Ticket thumbnail</string>
 </resources>
