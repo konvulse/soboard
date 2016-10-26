@@ -138,6 +138,12 @@ public class BoardingPassActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        hideStatusBar();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -145,7 +151,6 @@ public class BoardingPassActivity extends AppCompatActivity {
         interstitialAd.setAdUnitId("ca-app-pub-1470341388733034/9951540908");
         requestNewInterstitial();
 
-        hideStatusBar();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
         adjustBrightness();
@@ -194,7 +199,8 @@ public class BoardingPassActivity extends AppCompatActivity {
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls
         // are available.
-        delayedHide(100);
+        //delayedHide(100);
+        hide();
     }
 
     @Override
