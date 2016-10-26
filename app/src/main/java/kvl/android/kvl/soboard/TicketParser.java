@@ -29,8 +29,8 @@ public class TicketParser extends AsyncTask {
 
     private Uri imageUri;
     private String departureTime;
-    private String flightNumber = "unknown";
-    private String airline = "unknown";
+    private String flightNumber;
+    private String airline;
     private String recognizedText;
     private Context context;
     private Bitmap imageBitmap;
@@ -41,6 +41,7 @@ public class TicketParser extends AsyncTask {
     private static final String lang = "eng";
     ImageListAdapter listAdapter;
     long recordId;
+    boolean imageNotFound = true;
 
     public String getFlightNumber() {
         return flightNumber;
@@ -54,12 +55,14 @@ public class TicketParser extends AsyncTask {
         return departureTime;
     }
 
-    public Bitmap getImageBitmap() {
+    public Bitmap getImageBitmap() throws FileNotFoundException {
         if(imageBitmap == null) {
             try {
                 imageBitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(imageUri));
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                imageNotFound = true;
+                Log.e(LOG_TAG, imageUri.toString() + " not found");
+                throw e;
             }
         }
         return imageBitmap;
@@ -75,7 +78,7 @@ public class TicketParser extends AsyncTask {
         return imageName;
     }
 
-    public TicketParser(Context context, Uri imageUri, ImageListAdapter listAdapter, long recordId) {
+    public TicketParser(Context context, Uri imageUri, ImageListAdapter listAdapter, long recordId) throws FileNotFoundException {
         this.imageUri = imageUri;
         this.listAdapter = listAdapter;
         this.context = context;
@@ -85,12 +88,14 @@ public class TicketParser extends AsyncTask {
     }
 
 
-    public TicketParser(Context context, Uri imageUri, String airline, String flightNumber, String departureTime) {
+    public TicketParser(Context context, Uri imageUri, String airline, String flightNumber, String departureTime) throws FileNotFoundException {
         this.context = context;
         this.imageUri = imageUri;
         this.airline = airline;
         this.flightNumber = flightNumber;
         this.departureTime = departureTime;
+
+        getImageBitmap();
     }
 
     @Override
@@ -148,18 +153,19 @@ public class TicketParser extends AsyncTask {
     }
 
     private String findAirline(String[] lines) {
+        String airline = null;
         for(String line : lines) {
             if (line.contains("Southwest")) {
-                return "Southwest";
+                airline = "Southwest";
             } else if (line.contains("American")) {
-                return "American";
+                airline = "American";
             }
         }
-        return "unknown";
+        return airline;
     }
 
     private String findSouthwestFlightNumber(String line) {
-        String flightNumber = "unknown";
+        String flightNumber = null;
         String[] words = line.split(" ");
         if (words.length == 2) {
             flightNumber = words[1];
@@ -169,7 +175,7 @@ public class TicketParser extends AsyncTask {
     }
 
     private String findSouthwestDepartureTime(String line) {
-        String departureTime = "unknown";
+        String departureTime = null;
         String[] words = line.split(" ");
         if(words.length > 1) {
             departureTime = words[1] + " " + words[2];
@@ -189,7 +195,7 @@ public class TicketParser extends AsyncTask {
     }
 
     private String findAmericanFlightNumber(String keyLine, String valueLine) {
-        String flightNumber = "unknown";
+        String flightNumber = null;
         String[] words = valueLine.split(" ");
 
         if(words.length >= 2) {
@@ -203,7 +209,7 @@ public class TicketParser extends AsyncTask {
     }
 
     private String findAmericanDepartureTime(String line) {
-        String departureTime = "unknown";
+        String departureTime = null;
         String[] words = line.split(" ");
         if(words.length > 1) {
             departureTime = words[1];
@@ -226,15 +232,22 @@ public class TicketParser extends AsyncTask {
     private void findFlightInfo(String recognizedText) {
         String[] lines = recognizedText.split("\\r?\\n");
         airline = findAirline(lines);
-        if(airline.equals("Southwest")) {
-            findSouthwestInfo(lines);
-        } else if (airline.equals("American")) {
-            findAmericanInfo(lines);
+        if(airline != null) {
+            if (airline.equals("Southwest")) {
+                findSouthwestInfo(lines);
+            } else if (airline.equals("American")) {
+                findAmericanInfo(lines);
+            }
         }
     }
 
     private void performOcr() {
-        getImageBitmap();
+        try {
+            getImageBitmap();
+        } catch (FileNotFoundException e) {
+            Log.e(LOG_TAG, imageUri.toString() + " not found, cannot perform OCR");
+            return;
+        }
         /*
         FOR NOW ASSUME THE IMAGE IS NOT ROTATED
         if(imageBitmap.getWidth() > imageBitmap.getHeight()) {

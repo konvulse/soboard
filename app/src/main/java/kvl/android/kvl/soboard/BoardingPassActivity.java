@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -143,6 +144,9 @@ public class BoardingPassActivity extends AppCompatActivity {
             imageView.setImageBitmap(boardingPass);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            Log.e(LOG_TAG, "Image not found.");
+            //setResult(Activity.RESULT_CANCELED);
+            //finish();
         }
 
         imageView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE

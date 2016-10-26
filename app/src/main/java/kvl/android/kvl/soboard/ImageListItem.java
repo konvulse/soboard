@@ -10,6 +10,8 @@ import android.os.Environment;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.io.FileNotFoundException;
+
 /**
  * Created by kvl on 8/19/16.
  */
@@ -31,7 +33,7 @@ public final class ImageListItem implements Parcelable {
 
     private long recordId;
 
-    public ImageListItem(Uri image, Context context, ImageListAdapter listAdapter) {
+    public ImageListItem(Uri image, Context context, ImageListAdapter listAdapter) throws FileNotFoundException {
         this.context = context;
         this.imageUri = image;
 
@@ -49,7 +51,11 @@ public final class ImageListItem implements Parcelable {
         ticketDb = new TicketInfoHelper(context).getWritableDatabase();
     }
 
-    public ImageListItem(Context context, Cursor items) {
+    public void removeFromDb() {
+        ticketDb.delete(DatabaseSchema.TicketInfo.TABLE_NAME, DatabaseSchema.TicketInfo._ID + " = " + recordId, null);
+    }
+
+    public ImageListItem(Context context, Cursor items) throws FileNotFoundException {
         this.context = context;
         userDefinedName = items.getString(items.getColumnIndex(DatabaseSchema.TicketInfo.COLUMN_NAME_USER_DEFINED_NAME));
         recordId = items.getLong(items.getColumnIndex(DatabaseSchema.TicketInfo._ID));
@@ -63,18 +69,21 @@ public final class ImageListItem implements Parcelable {
         ticketDb = new TicketInfoHelper(this.context).getWritableDatabase();
     }
 
+    public long getRecordId() { return recordId; }
+
     public void setName(String name) {
+        if(!name.equals(userDefinedName)) {
+            if (name != null && !name.isEmpty() && !name.trim().equals(getName())) {
+                userDefinedName = name.trim();
+            } else {
+                userDefinedName = null;
+            }
 
-        if(name != null && !name.isEmpty() && !name.trim().equals(getName())) {
-            userDefinedName = name.trim();
-        } else {
-            userDefinedName = null;
+            ContentValues values = new ContentValues();
+            values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_USER_DEFINED_NAME, userDefinedName);
+            String query = DatabaseSchema.TicketInfo._ID + " = " + recordId;
+            ticketDb.update(DatabaseSchema.TicketInfo.TABLE_NAME, values, query, null);
         }
-
-        ContentValues values = new ContentValues();
-        values.put(DatabaseSchema.TicketInfo.COLUMN_NAME_USER_DEFINED_NAME, userDefinedName);
-        String query = DatabaseSchema.TicketInfo._ID + " = " + recordId;
-        ticketDb.update(DatabaseSchema.TicketInfo.TABLE_NAME, values, query, null);
     }
 
     public String getName() {
@@ -83,10 +92,10 @@ public final class ImageListItem implements Parcelable {
             name = userDefinedName;
         }
         else {
-            if (!ticketInfo.getFlightNumber().equals("unknown")) {
+            if (ticketInfo != null && ticketInfo.getFlightNumber() != null) {
                 name += ticketInfo.getAirline() + " ";
             }
-            if (!ticketInfo.getFlightNumber().equals("unknown")) {
+            if (ticketInfo != null && ticketInfo.getFlightNumber() != null) {
                 name += "Flight " + ticketInfo.getFlightNumber() + " ";
             }
             if (name.isEmpty()) {
@@ -97,11 +106,11 @@ public final class ImageListItem implements Parcelable {
         return name;
     }
 
-    public Bitmap getImageBitmap() {
+    public Bitmap getImageBitmap() throws FileNotFoundException {
         return ticketInfo.getImageBitmap();
     }
 
-    public Bitmap getScaledImageBitmap(int viewWidth, int viewHeight) {
+    public Bitmap getScaledImageBitmap(int viewWidth, int viewHeight) throws FileNotFoundException {
         Bitmap original = getImageBitmap();
         int width = viewWidth;
         int height = viewHeight;
@@ -122,7 +131,7 @@ public final class ImageListItem implements Parcelable {
         return this.getName();
     }
 
-    public Uri getUri() {
+    public Uri getImageUri() {
         return imageUri;
     }
 
