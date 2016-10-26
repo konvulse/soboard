@@ -6,11 +6,13 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -127,12 +129,12 @@ public class BoardingPassActivity extends AppCompatActivity {
         }
 
         Intent input = getIntent();
-        Intent data = input.getParcelableExtra(WelcomeActivity.BOARDING_PASS_EXTRA);
+        Uri imageUri = input.getParcelableExtra(WelcomeActivity.BOARDING_PASS_EXTRA);
 
         imageView = (ImageView) findViewById(R.id.boardingPassImageView);
 
         try {
-            boardingPass = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(data.getData()));
+            boardingPass = BitmapFactory.decodeStream(this.getContentResolver().openInputStream(imageUri));
             if(boardingPass.getWidth() > boardingPass.getHeight()) {
                 Matrix matrix = new Matrix();
                 matrix.postRotate(90);
@@ -142,6 +144,9 @@ public class BoardingPassActivity extends AppCompatActivity {
             imageView.setImageBitmap(boardingPass);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            Log.e(LOG_TAG, "Image not found.");
+            //setResult(Activity.RESULT_CANCELED);
+            //finish();
         }
 
         imageView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE

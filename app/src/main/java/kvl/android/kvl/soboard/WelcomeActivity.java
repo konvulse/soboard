@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -15,7 +17,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
+
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
 
 public class WelcomeActivity extends AppCompatActivity {
 
@@ -26,12 +34,17 @@ public class WelcomeActivity extends AppCompatActivity {
 
     ListView boardingPassListView;
     static final String BOARDING_PASS_EXTRA = "kvl.android.kvl.soboard.boarding_pass";
+    static final String SAVED_IMAGE_LIST = "kvl.android.kvl.soboard.savedImages";
 
+    ImageListAdapter imageAdapter;
     final Activity context = this;
+
+    SQLiteDatabase ticketDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.ticketDb = new TicketInfoHelper(context).getReadableDatabase();
         setContentView(R.layout.activity_welcome);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -53,8 +66,93 @@ public class WelcomeActivity extends AppCompatActivity {
             }
         });
 
+        imageAdapter = new ImageListAdapter(context, R.layout.image_list_item);
         boardingPassListView = (ListView) findViewById(R.id.boardingPassListView);
+        boardingPassListView.setAdapter(imageAdapter);
+
+        initializeImageListClickListener();
+        initializeImageListLongClickListener();
+
+        if(!(savedInstanceState == null || savedInstanceState.isEmpty())) {
+            rebuildFromBundle(savedInstanceState);
+        } else {
+            rebuildFromDatabase();
+        }
     }
+
+    private void rebuildFromDatabase() {
+        Cursor tickets = ticketDb.query(DatabaseSchema.TicketInfo.TABLE_NAME, null, null, null, null, null, null, null);
+        tickets.moveToFirst();
+        while(!tickets.isAfterLast()) {
+            try {
+                ImageListItem item = new ImageListItem(context, tickets);
+                imageAdapter.add(item);
+
+            } catch (FileNotFoundException e) {
+                Log.w(LOG_TAG, "Image no longer exists at the saved URI. The ticket will not be displayed. Ticket will be removed from database.");
+                //TODO: Remove deleted tickets from database
+                ticketDb.delete(DatabaseSchema.TicketInfo.TABLE_NAME, DatabaseSchema.TicketInfo._ID + " = " + tickets.getLong(tickets.getColumnIndex(DatabaseSchema.TicketInfo._ID)), null);
+            }
+            tickets.moveToNext();
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putParcelableArrayList(SAVED_IMAGE_LIST, imageAdapter.getArrayList());
+    }
+
+    private void rebuildFromBundle(Bundle state) {
+        ArrayList<ImageListItem> savedImages = state.getParcelableArrayList(SAVED_IMAGE_LIST);
+        for(ImageListItem image: savedImages) {
+            imageAdapter.add(image);
+        }
+    }
+
+    private void initializeImageListClickListener() {
+        boardingPassListView.setOnItemClickListener(new OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //try {
+                if (imageAdapter.isEditing()) {
+                    return;
+                }
+                imageAdapter.stopEditing(boardingPassListView);
+                Intent displayImage = new Intent(context, BoardingPassActivity.class);
+                displayImage.putExtra(BOARDING_PASS_EXTRA, imageAdapter.getItem(position).getImageUri());
+                startActivity(displayImage);
+               /*} catch (FileNotFoundException e) {
+                    imageAdapter.remove(imageAdapter.getItem(position));
+                    Toast.makeText(context, "The ticket image has been moved or deleted and cannot be displayed.", Toast.LENGTH_SHORT);
+                }*/
+
+            }
+        });
+    }
+
+    private void initializeImageListLongClickListener() {
+        boardingPassListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (imageAdapter.isEditing()) {
+                    return false;
+                }
+                boolean consumed = imageAdapter.makeEditable(parent, view, position, id);
+
+                return consumed;
+            }
+        });
+    }
+
+    /*@Override
+    public void onBackPressed() {
+        if(imageAdapter.isEditing()) {
+            imageAdapter.stopEditing(boardingPassListView);
+        }
+        super.onBackPressed();
+    }*/
 
     void getImage() {
         Log.d(LOG_TAG, "The user will now select an image to view");
@@ -80,6 +178,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 break;
         }
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check which request we're responding to
@@ -89,10 +188,15 @@ public class WelcomeActivity extends AppCompatActivity {
                     Log.d(LOG_TAG, "activity finished with no image selected");
                     return;
                 }
-
-                Intent displayImage = new Intent(this, BoardingPassActivity.class);
-                displayImage.putExtra(BOARDING_PASS_EXTRA, data);
-                startActivity(displayImage);
+                try {
+                    ImageListItem newItem = new ImageListItem(data.getData(), context, imageAdapter);
+                    imageAdapter.add(newItem);
+                    Intent displayImage = new Intent(this, BoardingPassActivity.class);
+                    displayImage.putExtra(BOARDING_PASS_EXTRA, newItem.getImageUri());
+                    startActivity(displayImage);
+                } catch (FileNotFoundException e) {
+                    Log.e(LOG_TAG, "Chosen image does not exist, this can't happen");
+                }
             default:
                 break;
         }
