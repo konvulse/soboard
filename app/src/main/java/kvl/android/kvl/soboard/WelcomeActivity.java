@@ -22,6 +22,12 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
@@ -41,6 +47,9 @@ public class WelcomeActivity extends AppCompatActivity {
 
     SQLiteDatabase ticketDb;
 
+    InterstitialAd interstitialAd;
+    AdView adBanner;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,19 +59,38 @@ public class WelcomeActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        MobileAds.initialize(context, getResources().getString(R.string.ad_mob_app_id));
+
+        adBanner = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("A11960FBF8D4DAB9AFC3DE56A7D7C0D8")
+                .build();
+        adBanner.loadAd(adRequest);
+
+        interstitialAd = new InterstitialAd(context);
+        interstitialAd.setAdUnitId(getResources().getString(R.string.banner_ad_unit_id));
+        requestNewInterstitial();
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /*Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();*/
-
-                if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
-                    Log.d(LOG_TAG, "requesting permissions to write external storage");
+                if (interstitialAd.isLoaded()) {
+                    Log.v(LOG_TAG, "Displaying ad.");
+                    interstitialAd.show();
                 } else {
-                    Log.d(LOG_TAG, "permission already granted");
-                    getImage();
+                    addNewTicket();
                 }
+
+                interstitialAd.setAdListener(new AdListener() {
+                    @Override
+                    public void onAdClosed() {
+                        super.onAdClosed();
+                        requestNewInterstitial();
+                        addNewTicket();
+                    }
+                });
+
             }
         });
 
@@ -78,6 +106,24 @@ public class WelcomeActivity extends AppCompatActivity {
         } else {
             rebuildFromDatabase();
         }
+    }
+
+    private void addNewTicket() {
+        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            ActivityCompat.requestPermissions(context, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_WRITE_EXTERNAL_STORAGE);
+            Log.d(LOG_TAG, "requesting permissions to write external storage");
+        } else {
+            Log.d(LOG_TAG, "permission already granted");
+            getImage();
+        }
+    }
+
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("A11960FBF8D4DAB9AFC3DE56A7D7C0D8")
+                .build();
+
+        interstitialAd.loadAd(adRequest);
     }
 
     private void rebuildFromDatabase() {

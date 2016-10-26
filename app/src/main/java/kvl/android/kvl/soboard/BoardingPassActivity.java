@@ -19,6 +19,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+
 import java.io.FileNotFoundException;
 
 /**
@@ -47,6 +50,16 @@ public class BoardingPassActivity extends AppCompatActivity {
     private static final String LOG_TAG = "BoardingPassActivity";
 
     private final Handler mHideHandler = new Handler();
+
+    @Override
+    public void onBackPressed() {
+        if (interstitialAd.isLoaded()) {
+            Log.v(LOG_TAG, "Displaying ad.");
+            interstitialAd.show();
+        }
+
+        super.onBackPressed();
+    }
 
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -101,6 +114,17 @@ public class BoardingPassActivity extends AppCompatActivity {
     ImageView imageView;
     Activity context = this;
 
+    InterstitialAd interstitialAd;
+
+
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice("A11960FBF8D4DAB9AFC3DE56A7D7C0D8")
+                .build();
+
+        interstitialAd.loadAd(adRequest);
+    }
+
     void adjustBrightness() {
         WindowManager.LayoutParams lp = getWindow().getAttributes();
         lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL;
@@ -116,6 +140,10 @@ public class BoardingPassActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        interstitialAd = new InterstitialAd(context);
+        interstitialAd.setAdUnitId("ca-app-pub-1470341388733034/9951540908");
+        requestNewInterstitial();
 
         hideStatusBar();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
