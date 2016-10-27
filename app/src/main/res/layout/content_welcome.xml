@@ -19,7 +19,9 @@
         android:id="@+id/boardingPassListView"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:divider="@null"
+        android:dividerHeight="0dp"/>
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
