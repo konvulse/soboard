@@ -96,7 +96,7 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
         editName.setText(item.getName());
         imageName.setVisibility(View.GONE);
         editName.setVisibility(View.VISIBLE);
-        deleteButton.setVisibility(View.VISIBLE);
+        //deleteButton.setVisibility(View.VISIBLE);
 
         if (editName.requestFocus()) {
             InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -120,18 +120,6 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
             }
         });
 
-        /*editName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_NULL || event == null || event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-                    endEdit(item, imageName, editName, deleteButton);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });*/
-
         itemLayout.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -146,7 +134,7 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
             }
         });
 
-        deleteButton.setOnClickListener(new View.OnClickListener() {
+        /*deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(LOG_TAG, "Clicked delete");
@@ -154,7 +142,7 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
                 item.removeFromDb();
                 remove(item);
             }
-        });
+        });*/
 
 
     }
@@ -164,7 +152,7 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
         imageName.setText(item.getName());
         imageName.setVisibility(View.VISIBLE);
         editName.setVisibility(View.GONE);
-        deleteButton.setVisibility(View.GONE);
+        //deleteButton.setVisibility(View.GONE);
         editing = false;
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editName.getApplicationWindowToken(), InputMethodManager.HIDE_IMPLICIT_ONLY);
