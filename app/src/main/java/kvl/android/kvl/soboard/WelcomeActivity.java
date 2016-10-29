@@ -164,7 +164,7 @@ public class WelcomeActivity extends AppCompatActivity {
     View deleteView;
     View moveView;
     boolean shouldDelete = false;
-    boolean initialMove = true;
+    boolean boardingPassTouchMove = false;
     private void initializeImageListTouchListener() {
         boardingPassListView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -198,33 +198,38 @@ public class WelcomeActivity extends AppCompatActivity {
                         if (Math.abs(event.getRawX() - startX) == 0) {
                             Log.d(LOG_TAG, "Haven't moved");
                         } else {
-                            if (event.getRawX() < startX) {
-                                Log.d(LOG_TAG, "Resetting startX");
-                                startX = event.getRawX();
+                            if(imageAdapter.isEditing()) {
+                                moveView.setLeft(startLeft);
                             } else {
-                                if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.55) {
-                                    if (!shouldDelete) {
-                                        Log.d(LOG_TAG, "Will delete item");
-                                        shouldDelete = true;
-                                    }
-                                } else if (shouldDelete) {
-                                    Log.d(LOG_TAG, "Will not delete item");
-                                    shouldDelete = false;
+                                if (event.getRawX() < startX) {
+                                    Log.d(LOG_TAG, "Resetting startX");
+                                    startX = event.getRawX();
                                 } else {
-                                    Log.d(LOG_TAG, "No change.");
-                                }
+                                    if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.55) {
+                                        if (!shouldDelete) {
+                                            Log.d(LOG_TAG, "Will delete item");
+                                            shouldDelete = true;
+                                        }
+                                    } else if (shouldDelete) {
+                                        Log.d(LOG_TAG, "Will not delete item");
+                                        shouldDelete = false;
+                                    } else {
+                                        Log.d(LOG_TAG, "No change.");
+                                    }
 
-                                moveView.setLeft((int) (startLeft + event.getRawX() - startX));
+                                    moveView.setLeft((int) (startLeft + event.getRawX() - startX));
+                                }
                             }
                         }
-                        if(returning) {
-                            Log.d(LOG_TAG, "returning true");
-                        } else {
-                            Log.d(LOG_TAG, "returning false");
+                        if (!boardingPassTouchMove && (event.getRawX() - startX) > 0) {
+                            Log.d(LOG_TAG, "Suppress long clicks");
+                            boardingPassTouchMove = true;
                         }
                         break;
                     case MotionEvent.ACTION_UP:
+                        Log.d(LOG_TAG, "End touch sequence");
                         returning = true;
+                        boardingPassTouchMove = false;
                         if (Math.abs(event.getRawX() - startX) < 5) {
                             Log.d(LOG_TAG, "Is this a click");
                             returning = false;
@@ -260,6 +265,11 @@ public class WelcomeActivity extends AppCompatActivity {
                     default:
                         break;
                 }
+                if(returning) {
+                    Log.d(LOG_TAG, "returning true");
+                } else {
+                    Log.d(LOG_TAG, "returning false");
+                }
                 return returning;
             }
         });
@@ -291,12 +301,10 @@ public class WelcomeActivity extends AppCompatActivity {
         boardingPassListView.setOnItemLongClickListener(new OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if (imageAdapter.isEditing()) {
+                if (imageAdapter.isEditing() || boardingPassTouchMove) {
                     return false;
                 }
-                boolean consumed = imageAdapter.makeEditable(parent, view, position, id);
-
-                return consumed;
+                return imageAdapter.makeEditable(parent, view, position, id);
             }
         });
     }
