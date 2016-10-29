@@ -172,95 +172,13 @@ public class WelcomeActivity extends AppCompatActivity {
                 boolean returning = false;
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        returning = false;
-                        startX = event.getRawX();
-                        shouldDelete = false;
-                        Rect rect = new Rect();
-                        int childCount = boardingPassListView.getChildCount();
-                        int[] listViewCoords = new int[2];
-                        boardingPassListView.getLocationOnScreen(listViewCoords);
-                        int x = (int) event.getRawX() - listViewCoords[0];
-                        int y = (int) event.getRawY() - listViewCoords[1];
-                        View child;
-                        for (int i = 0; i < childCount; i++) {
-                            child = boardingPassListView.getChildAt(i);
-                            child.getHitRect(rect);
-                            if (rect.contains(x, y)) {
-                                deleteView = child;
-                                break;
-                            }
-                        }
-                        moveView = deleteView.findViewById(R.id.layout_imageListItem);
-                        startLeft = deleteView.getLeft();
+                        returning = handleActionDown(event);
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        returning = false;
-                        if (Math.abs(event.getRawX() - startX) == 0) {
-                            Log.d(LOG_TAG, "Haven't moved");
-                        } else {
-                            if(imageAdapter.isEditing()) {
-                                moveView.setLeft(startLeft);
-                            } else {
-                                if (event.getRawX() < startX) {
-                                    Log.d(LOG_TAG, "Resetting startX");
-                                    startX = event.getRawX();
-                                } else {
-                                    if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.55) {
-                                        if (!shouldDelete) {
-                                            Log.d(LOG_TAG, "Will delete item");
-                                            shouldDelete = true;
-                                        }
-                                    } else if (shouldDelete) {
-                                        Log.d(LOG_TAG, "Will not delete item");
-                                        shouldDelete = false;
-                                    } else {
-                                        Log.d(LOG_TAG, "No change.");
-                                    }
-
-                                    moveView.setLeft((int) (startLeft + event.getRawX() - startX));
-                                }
-                            }
-                        }
-                        if (!boardingPassTouchMove && (event.getRawX() - startX) > 0) {
-                            Log.d(LOG_TAG, "Suppress long clicks");
-                            boardingPassTouchMove = true;
-                        }
+                        returning = handleActionMove(event);
                         break;
                     case MotionEvent.ACTION_UP:
-                        Log.d(LOG_TAG, "End touch sequence");
-                        returning = true;
-                        boardingPassTouchMove = false;
-                        if (Math.abs(event.getRawX() - startX) < 5) {
-                            Log.d(LOG_TAG, "Is this a click");
-                            returning = false;
-                        } else {
-                            if (event.getEventTime() - event.getDownTime() < 200) {
-                                if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.25) {
-                                    shouldDelete = true;
-                                }
-                            }
-                            if (shouldDelete) {
-                                final int deletePosition = boardingPassListView.getPositionForView(deleteView);
-                                Log.d(LOG_TAG, "Deleting item at " + deletePosition);
-                            /*deleteView.animate()
-                                    .translationXBy(boardingPassListView.getWidth())
-                                    .setDuration(200)
-                                    .setInterpolator(new AccelerateDecelerateInterpolator())
-                                    .setListener(new AnimatorListenerAdapter() {
-                                        @Override
-                                        public void onAnimationEnd(Animator animation) {
-                                            //deleteView.setVisibility(View.GONE);
-                                            //NOTE THIS WORKS IF I MOVE THE REMOVE CALL OUT OF THE ANIMATION
-                                            imageAdapter.getItem(deletePosition).removeFromDb();
-                                            imageAdapter.remove(imageAdapter.getItem(deletePosition));
-                                        }
-                                    });*/
-                                imageAdapter.getItem(deletePosition).removeFromDb();
-                                imageAdapter.remove(imageAdapter.getItem(deletePosition));
-                            } else {
-                                moveView.setLeft(startLeft);
-                            }
-                        }
+                        returning = handleActionUp(event);
                         break;
                     default:
                         break;
@@ -270,6 +188,110 @@ public class WelcomeActivity extends AppCompatActivity {
                 } else {
                     Log.d(LOG_TAG, "returning false");
                 }
+                return returning;
+            }
+
+            private boolean handleActionUp(MotionEvent event) {
+                boolean returning;
+                Log.d(LOG_TAG, "End touch sequence");
+                returning = true;
+                boardingPassTouchMove = false;
+                if (Math.abs(event.getRawX() - startX) < 5) {
+                    Log.d(LOG_TAG, "Is this a click");
+                    returning = false;
+                } else {
+                    if (event.getEventTime() - event.getDownTime() < 200) {
+                        if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.25) {
+                            shouldDelete = true;
+                        }
+                    }
+                    if (shouldDelete) {
+                        deleteItem(deleteView);
+                    } else {
+                        moveView.setLeft(startLeft);
+                    }
+                }
+                return returning;
+            }
+
+            private void deleteItem(final View deleteView) {
+                final int deletePosition = boardingPassListView.getPositionForView(deleteView);
+                Log.d(LOG_TAG, "Deleting item at " + deletePosition);
+                /*deleteView.animate()
+                    .translationXBy(boardingPassListView.getWidth())
+                    .setDuration(200)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            //deleteView.setVisibility(View.GONE);
+                            //NOTE THIS WORKS IF I MOVE THE REMOVE CALL OUT OF THE ANIMATION
+                            imageAdapter.getItem(deletePosition).removeFromDb();
+                            imageAdapter.remove(imageAdapter.getItem(deletePosition));
+                        }
+                    });*/
+                imageAdapter.getItem(deletePosition).removeFromDb();
+                imageAdapter.remove(imageAdapter.getItem(deletePosition));
+            }
+
+            private boolean handleActionMove(MotionEvent event) {
+                boolean returning;
+                returning = false;
+                if (Math.abs(event.getRawX() - startX) == 0) {
+                    Log.d(LOG_TAG, "Haven't moved");
+                } else {
+                    if(imageAdapter.isEditing()) {
+                        moveView.setLeft(startLeft);
+                    } else {
+                        if (event.getRawX() < startX) {
+                            Log.d(LOG_TAG, "Resetting startX");
+                            startX = event.getRawX();
+                        } else {
+                            if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.55) {
+                                if (!shouldDelete) {
+                                    Log.d(LOG_TAG, "Will delete item");
+                                    shouldDelete = true;
+                                }
+                            } else if (shouldDelete) {
+                                Log.d(LOG_TAG, "Will not delete item");
+                                shouldDelete = false;
+                            } else {
+                                Log.d(LOG_TAG, "No change.");
+                            }
+
+                            moveView.setLeft((int) (startLeft + event.getRawX() - startX));
+                        }
+                    }
+                }
+                if (!boardingPassTouchMove && (event.getRawX() - startX) > 0) {
+                    Log.d(LOG_TAG, "Suppress long clicks");
+                    boardingPassTouchMove = true;
+                }
+                return returning;
+            }
+
+            private boolean handleActionDown(MotionEvent event) {
+                boolean returning;
+                returning = false;
+                startX = event.getRawX();
+                shouldDelete = false;
+                Rect rect = new Rect();
+                int childCount = boardingPassListView.getChildCount();
+                int[] listViewCoords = new int[2];
+                boardingPassListView.getLocationOnScreen(listViewCoords);
+                int x = (int) event.getRawX() - listViewCoords[0];
+                int y = (int) event.getRawY() - listViewCoords[1];
+                View child;
+                for (int i = 0; i < childCount; i++) {
+                    child = boardingPassListView.getChildAt(i);
+                    child.getHitRect(rect);
+                    if (rect.contains(x, y)) {
+                        deleteView = child;
+                        break;
+                    }
+                }
+                moveView = deleteView.findViewById(R.id.layout_imageListItem);
+                startLeft = deleteView.getLeft();
                 return returning;
             }
         });
