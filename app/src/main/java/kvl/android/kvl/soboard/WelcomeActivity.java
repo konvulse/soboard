@@ -208,6 +208,7 @@ public class WelcomeActivity extends AppCompatActivity {
                     if (shouldDelete) {
                         deleteItem(deleteView);
                     } else {
+                        moveView.setAlpha(1f);
                         moveView.setLeft(startLeft);
                     }
                 }
@@ -247,7 +248,7 @@ public class WelcomeActivity extends AppCompatActivity {
                             Log.d(LOG_TAG, "Resetting startX");
                             startX = event.getRawX();
                         } else {
-                            if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.55) {
+                            if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.5) {
                                 if (!shouldDelete) {
                                     Log.d(LOG_TAG, "Will delete item");
                                     shouldDelete = true;
@@ -262,6 +263,11 @@ public class WelcomeActivity extends AppCompatActivity {
                             moveView.setLeft((int) (startLeft + event.getRawX() - startX));
                         }
                     }
+                }
+                if(shouldDelete) {
+                    moveView.setAlpha(0.25f);
+                } else {
+                    moveView.setAlpha(1f);
                 }
                 if (!boardingPassTouchMove && (event.getRawX() - startX) > 0) {
                     Log.d(LOG_TAG, "Suppress long clicks");
