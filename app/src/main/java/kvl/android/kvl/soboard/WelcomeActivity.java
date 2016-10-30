@@ -195,14 +195,12 @@ public class WelcomeActivity extends AppCompatActivity {
             }
 
             private boolean handleActionUp(MotionEvent event) {
-                boolean returning;
+                boolean returning = true;
                 Log.d(LOG_TAG, "End touch sequence");
-                returning = true;
-                boardingPassTouchMove = false;
-                sliding = false;
+
                 if(scrolling) returning = false;
-                scrolling = false;
-                if (Math.abs(event.getRawX() - startX) < 5) {
+
+                if (!(sliding || scrolling)) {
                     Log.d(LOG_TAG, "Is this a click");
                     returning = false;
                 } else {
@@ -218,6 +216,10 @@ public class WelcomeActivity extends AppCompatActivity {
                         moveView.setLeft(startLeft);
                     }
                 }
+
+                boardingPassTouchMove = false;
+                sliding = false;
+                scrolling = false;
                 return returning;
             }
 
@@ -256,29 +258,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 if (Math.abs(event.getRawX() - startX)  < 5) {
                     Log.v(LOG_TAG, "Haven't moved");
                 } else {
-                    sliding = true;
-                    if (imageAdapter.isEditing()) {
-                        moveView.setLeft(startLeft);
-                    } else {
-                        if (event.getRawX() < startX) {
-                            Log.v(LOG_TAG, "Resetting startX");
-                            startX = event.getRawX();
-                        } else {
-                            if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.5) {
-                                if (!shouldDelete) {
-                                    Log.d(LOG_TAG, "Will delete item");
-                                    shouldDelete = true;
-                                }
-                            } else if (shouldDelete) {
-                                Log.d(LOG_TAG, "Will not delete item");
-                                shouldDelete = false;
-                            } else {
-                                Log.d(LOG_TAG, "No change.");
-                            }
-
-                            moveView.setLeft((int) (startLeft + event.getRawX() - startX));
-                        }
-                    }
+                    handleSwipe(event);
                 }
 
                 if(shouldDelete) moveView.setAlpha(0.25f);
@@ -289,6 +269,32 @@ public class WelcomeActivity extends AppCompatActivity {
                     boardingPassTouchMove = true;
                 }
                 return returning || sliding;
+            }
+
+            private void handleSwipe(MotionEvent event) {
+                sliding = true;
+                if (imageAdapter.isEditing()) {
+                    moveView.setLeft(startLeft);
+                } else {
+                    if (event.getRawX() < startX) {
+                        Log.v(LOG_TAG, "Resetting startX");
+                        startX = event.getRawX();
+                    } else {
+                        if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.5) {
+                            if (!shouldDelete) {
+                                Log.d(LOG_TAG, "Will delete item");
+                                shouldDelete = true;
+                            }
+                        } else if (shouldDelete) {
+                            Log.d(LOG_TAG, "Will not delete item");
+                            shouldDelete = false;
+                        } else {
+                            Log.d(LOG_TAG, "No change.");
+                        }
+
+                        moveView.setLeft((int) (startLeft + event.getRawX() - startX));
+                    }
+                }
             }
 
             private boolean handleActionDown(MotionEvent event) {
