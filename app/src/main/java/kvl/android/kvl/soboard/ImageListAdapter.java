@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -98,12 +97,11 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
         if (editName.requestFocus()) {
             InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInputFromWindow(editName.getApplicationWindowToken(), InputMethodManager.SHOW_IMPLICIT, 0);
-
+            editName.selectAll();
             Log.d(LOG_TAG, "editName took focus");
         } else {
             Log.d(LOG_TAG, "editName did not take focus");
         }
-
 
         editName.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -154,7 +152,7 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
         }
     }
 
-    public boolean makeEditable(AdapterView<?> parent, View view, int position, long id) {
+    public boolean makeEditable(View view, int position) {
         boolean alreadyEditing = editing;
 
         View v = view;

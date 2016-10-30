@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -20,8 +21,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 
 import com.google.android.gms.ads.AdListener;
@@ -197,11 +196,13 @@ public class WelcomeActivity extends AppCompatActivity {
             private boolean handleActionUp(MotionEvent event) {
                 boolean returning = true;
                 Log.d(LOG_TAG, "End touch sequence");
+                longPressHandler.removeCallbacks(handleLongPress);
 
                 if(scrolling) returning = false;
 
                 if (!(sliding || scrolling)) {
-                    Log.d(LOG_TAG, "Is this a click");
+                    Log.d(LOG_TAG, "This is a click");
+                    deleteView.performClick();
                     returning = false;
                 } else {
                     if (event.getEventTime() - event.getDownTime() < 200) {
@@ -251,15 +252,25 @@ public class WelcomeActivity extends AppCompatActivity {
                     return false;
                 }
 
-                if (!scrolling && !sliding && Math.abs(event.getRawY() - startY) > 20) {
-                    Log.d(LOG_TAG, "User is scrolling the list");
-                    scrolling = true;
-                }
-                if (Math.abs(event.getRawX() - startX)  < 5) {
-                    Log.v(LOG_TAG, "Haven't moved");
-                } else {
+                if (sliding) {
                     handleSwipe(event);
+                } else {
+                    if(Math.abs(event.getRawX() - startX)  < 5 &&
+                        Math.abs(event.getRawY() - startY)  < 5) {
+                        Log.v(LOG_TAG, "Haven't moved");
+                    } else {
+                        Log.v(LOG_TAG, "Cancelling long press");
+                        longPressHandler.removeCallbacks(handleLongPress);
+
+                        if (Math.abs(event.getRawY() - startY) > 20) {
+                            Log.d(LOG_TAG, "User is scrolling the list");
+                            scrolling = true;
+                        } else {
+                            handleSwipe(event);
+                        }
+                    }
                 }
+
 
                 if(shouldDelete) moveView.setAlpha(0.25f);
                 else moveView.setAlpha(1f);
@@ -297,6 +308,14 @@ public class WelcomeActivity extends AppCompatActivity {
                 }
             }
 
+            final Handler longPressHandler = new Handler();
+            Runnable handleLongPress = new Runnable() {
+                public void run() {
+                    Log.i(LOG_TAG, "Long press!");
+                    deleteView.performLongClick();
+                }
+            };
+
             private boolean handleActionDown(MotionEvent event) {
                 boolean returning;
                 returning = false;
@@ -320,17 +339,17 @@ public class WelcomeActivity extends AppCompatActivity {
                 }
                 moveView = deleteView.findViewById(R.id.layout_imageListItem);
                 startLeft = deleteView.getLeft();
+                longPressHandler.postDelayed(handleLongPress, android.view.ViewConfiguration.getLongPressTimeout());
                 return returning;
             }
         });
     }
 
     private void initializeImageListClickListener() {
-        boardingPassListView.setOnItemClickListener(new OnItemClickListener() {
+        boardingPassListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //try {
                 if (imageAdapter.isEditing()) {
                     return;
                 }
@@ -338,23 +357,18 @@ public class WelcomeActivity extends AppCompatActivity {
                 Intent displayImage = new Intent(context, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, imageAdapter.getItem(position).getImageUri());
                 startActivity(displayImage);
-               /*} catch (FileNotFoundException e) {
-                    imageAdapter.remove(imageAdapter.getItem(position));
-                    Toast.makeText(context, "The ticket image has been moved or deleted and cannot be displayed.", Toast.LENGTH_SHORT);
-                }*/
-
             }
         });
     }
 
     private void initializeImageListLongClickListener() {
-        boardingPassListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+        boardingPassListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 if (imageAdapter.isEditing() || boardingPassTouchMove) {
                     return false;
                 }
-                return imageAdapter.makeEditable(parent, view, position, id);
+                return imageAdapter.makeEditable(view, position);
             }
         });
     }
