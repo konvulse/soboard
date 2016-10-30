@@ -160,11 +160,14 @@ public class WelcomeActivity extends AppCompatActivity {
     }
 
     float startX;
+    float startY;
     int startLeft;
     View deleteView;
     View moveView;
     boolean shouldDelete = false;
     boolean boardingPassTouchMove = false;
+    boolean scrolling = false;
+    boolean sliding = false;
     private void initializeImageListTouchListener() {
         boardingPassListView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -184,9 +187,9 @@ public class WelcomeActivity extends AppCompatActivity {
                         break;
                 }
                 if(returning) {
-                    Log.d(LOG_TAG, "returning true");
+                    Log.v(LOG_TAG, "returning true");
                 } else {
-                    Log.d(LOG_TAG, "returning false");
+                    Log.v(LOG_TAG, "returning false");
                 }
                 return returning;
             }
@@ -196,6 +199,9 @@ public class WelcomeActivity extends AppCompatActivity {
                 Log.d(LOG_TAG, "End touch sequence");
                 returning = true;
                 boardingPassTouchMove = false;
+                sliding = false;
+                if(scrolling) returning = false;
+                scrolling = false;
                 if (Math.abs(event.getRawX() - startX) < 5) {
                     Log.d(LOG_TAG, "Is this a click");
                     returning = false;
@@ -238,14 +244,24 @@ public class WelcomeActivity extends AppCompatActivity {
             private boolean handleActionMove(MotionEvent event) {
                 boolean returning;
                 returning = false;
-                if (Math.abs(event.getRawX() - startX) == 0) {
-                    Log.d(LOG_TAG, "Haven't moved");
+
+                if(scrolling) {
+                    return false;
+                }
+
+                if (!scrolling && !sliding && Math.abs(event.getRawY() - startY) > 20) {
+                    Log.d(LOG_TAG, "User is scrolling the list");
+                    scrolling = true;
+                }
+                if (Math.abs(event.getRawX() - startX)  < 5) {
+                    Log.v(LOG_TAG, "Haven't moved");
                 } else {
-                    if(imageAdapter.isEditing()) {
+                    sliding = true;
+                    if (imageAdapter.isEditing()) {
                         moveView.setLeft(startLeft);
                     } else {
                         if (event.getRawX() < startX) {
-                            Log.d(LOG_TAG, "Resetting startX");
+                            Log.v(LOG_TAG, "Resetting startX");
                             startX = event.getRawX();
                         } else {
                             if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.5) {
@@ -264,22 +280,22 @@ public class WelcomeActivity extends AppCompatActivity {
                         }
                     }
                 }
-                if(shouldDelete) {
-                    moveView.setAlpha(0.25f);
-                } else {
-                    moveView.setAlpha(1f);
-                }
+
+                if(shouldDelete) moveView.setAlpha(0.25f);
+                else moveView.setAlpha(1f);
+
                 if (!boardingPassTouchMove && (event.getRawX() - startX) > 0) {
                     Log.d(LOG_TAG, "Suppress long clicks");
                     boardingPassTouchMove = true;
                 }
-                return returning;
+                return returning || sliding;
             }
 
             private boolean handleActionDown(MotionEvent event) {
                 boolean returning;
                 returning = false;
                 startX = event.getRawX();
+                startY = event.getRawY();
                 shouldDelete = false;
                 Rect rect = new Rect();
                 int childCount = boardingPassListView.getChildCount();
