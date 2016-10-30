@@ -1,6 +1,8 @@
 package kvl.android.kvl.soboard;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
@@ -228,7 +231,7 @@ public class WelcomeActivity extends AppCompatActivity {
             private void deleteItem(final View deleteView) {
                 final int deletePosition = boardingPassListView.getPositionForView(deleteView);
                 Log.d(LOG_TAG, "Deleting item at " + deletePosition);
-                /*deleteView.animate()
+                moveView.animate()
                     .translationXBy(boardingPassListView.getWidth())
                     .setDuration(200)
                     .setInterpolator(new AccelerateDecelerateInterpolator())
@@ -240,9 +243,9 @@ public class WelcomeActivity extends AppCompatActivity {
                             imageAdapter.getItem(deletePosition).removeFromDb();
                             imageAdapter.remove(imageAdapter.getItem(deletePosition));
                         }
-                    });*/
-                imageAdapter.getItem(deletePosition).removeFromDb();
-                imageAdapter.remove(imageAdapter.getItem(deletePosition));
+                    });
+                //imageAdapter.getItem(deletePosition).removeFromDb();
+                //imageAdapter.remove(imageAdapter.getItem(deletePosition));
             }
 
             private boolean handleActionMove(MotionEvent event) {

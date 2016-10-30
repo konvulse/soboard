@@ -32,11 +32,14 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        //TODO: convertView is causing issues with refreshing list after deleting items not at end of list
         View v = convertView;
-        if (v == null) {
+        //if (v == null) {
             LayoutInflater vi = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             v = vi.inflate(R.layout.image_list_item, null);
-        }
+        //} else {
+        //    View moveView = deleteView.findViewById(R.id.layout_imageListItem);
+        //}
 
         if (!this.isEmpty()) {
             ImageListItem item = this.getItem(position);
