@@ -77,7 +77,7 @@ public class WelcomeActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (interstitialAd.isLoaded()) {
+                if (interstitialAd.isLoaded() && !BuildConfig.DEBUG) {
                     Log.v(LOG_TAG, "Displaying ad.");
                     interstitialAd.show();
                 } else {

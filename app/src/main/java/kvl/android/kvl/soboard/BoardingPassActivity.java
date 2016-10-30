@@ -26,7 +26,9 @@ public class BoardingPassActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (interstitialAd.isLoaded()) {
             Log.v(LOG_TAG, "Displaying ad.");
-            interstitialAd.show();
+            if(!BuildConfig.DEBUG) {
+                interstitialAd.show();
+            }
         }
 
         super.onBackPressed();
