@@ -1,12 +1,16 @@
 package kvl.android.kvl.soboard;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -16,10 +20,10 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 
 import com.google.android.gms.ads.AdListener;
@@ -100,6 +104,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         initializeImageListClickListener();
         initializeImageListLongClickListener();
+        initializeImageListTouchListener();
 
         if(!(savedInstanceState == null || savedInstanceState.isEmpty())) {
             rebuildFromBundle(savedInstanceState);
@@ -136,11 +141,11 @@ public class WelcomeActivity extends AppCompatActivity {
 
             } catch (FileNotFoundException e) {
                 Log.w(LOG_TAG, "Image no longer exists at the saved URI. The ticket will not be displayed. Ticket will be removed from database.");
-                //TODO: Remove deleted tickets from database
                 ticketDb.delete(DatabaseSchema.TicketInfo.TABLE_NAME, DatabaseSchema.TicketInfo._ID + " = " + tickets.getLong(tickets.getColumnIndex(DatabaseSchema.TicketInfo._ID)), null);
             }
             tickets.moveToNext();
         }
+        tickets.close();
     }
 
     @Override
@@ -151,17 +156,195 @@ public class WelcomeActivity extends AppCompatActivity {
 
     private void rebuildFromBundle(Bundle state) {
         ArrayList<ImageListItem> savedImages = state.getParcelableArrayList(SAVED_IMAGE_LIST);
-        for(ImageListItem image: savedImages) {
-            imageAdapter.add(image);
+        if(savedImages != null) {
+            for (ImageListItem image : savedImages) {
+                imageAdapter.add(image);
+            }
         }
     }
 
+    float startX;
+    float startY;
+    int startLeft;
+    View deleteView;
+    View moveView;
+    boolean shouldDelete = false;
+    boolean suppressLongPress = true;
+    boolean scrolling = false;
+    boolean sliding = false;
+    private void initializeImageListTouchListener() {
+        boardingPassListView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                boolean returning = false;
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        returning = handleActionDown(event);
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        returning = handleActionMove(event);
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        returning = handleActionUp(event);
+                        break;
+                    default:
+                        break;
+                }
+                if(returning) {
+                    Log.v(LOG_TAG, "returning true");
+                } else {
+                    Log.v(LOG_TAG, "returning false");
+                }
+                return returning;
+            }
+
+            private boolean handleActionUp(MotionEvent event) {
+                boolean returning = true;
+                Log.d(LOG_TAG, "End touch sequence");
+                longPressHandler.removeCallbacks(handleLongPress);
+
+                if(scrolling) returning = false;
+
+                if (!(sliding || scrolling)) {
+                    Log.d(LOG_TAG, "This is a click");
+                    deleteView.performClick();
+                    returning = false;
+                } else {
+                    if (event.getEventTime() - event.getDownTime() < 200) {
+                        if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.25) {
+                            shouldDelete = true;
+                        }
+                    }
+                    if (shouldDelete) {
+                        deleteItem(deleteView);
+                    } else {
+                        moveView.setAlpha(1f);
+                        moveView.setLeft(startLeft);
+                    }
+                }
+
+                sliding = false;
+                scrolling = false;
+                return returning;
+            }
+
+            private void deleteItem(final View deleteView) {
+                final int deletePosition = boardingPassListView.getPositionForView(deleteView);
+                Log.d(LOG_TAG, "Deleting item at " + deletePosition);
+                moveView.animate()
+                    .translationXBy(boardingPassListView.getWidth())
+                    .setDuration(200)
+                    .setInterpolator(new AccelerateDecelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            //deleteView.setVisibility(View.GONE);
+                            //NOTE THIS WORKS IF I MOVE THE REMOVE CALL OUT OF THE ANIMATION
+                            imageAdapter.getItem(deletePosition).removeFromDb();
+                            imageAdapter.remove(imageAdapter.getItem(deletePosition));
+                        }
+                    });
+            }
+
+            private boolean handleActionMove(MotionEvent event) {
+                if(scrolling) {
+                    return false;
+                }
+
+                if (sliding) {
+                    handleSwipe(event);
+                } else {
+                    if(Math.abs(event.getRawX() - startX)  < 5 &&
+                        Math.abs(event.getRawY() - startY)  < 5) {
+                        Log.v(LOG_TAG, "Haven't moved");
+                    } else {
+                        Log.v(LOG_TAG, "Cancelling long press");
+                        longPressHandler.removeCallbacks(handleLongPress);
+
+                        if (Math.abs(event.getRawY() - startY) > 10) {
+                            Log.d(LOG_TAG, "User is scrolling the list");
+                            scrolling = true;
+                        } else {
+                            handleSwipe(event);
+                        }
+                    }
+                }
+
+
+                if(shouldDelete) moveView.setAlpha(0.25f);
+                else moveView.setAlpha(1f);
+
+                return sliding;
+            }
+
+            private void handleSwipe(MotionEvent event) {
+                sliding = true;
+                if (imageAdapter.isEditing()) {
+                    moveView.setLeft(startLeft);
+                } else {
+                    if (event.getRawX() < startX) {
+                        Log.v(LOG_TAG, "Resetting startX");
+                        startX = event.getRawX();
+                    } else {
+                        if (event.getRawX() - startX > boardingPassListView.getWidth() * 0.5) {
+                            if (!shouldDelete) {
+                                Log.d(LOG_TAG, "Will delete item");
+                                shouldDelete = true;
+                            }
+                        } else if (shouldDelete) {
+                            Log.d(LOG_TAG, "Will not delete item");
+                            shouldDelete = false;
+                        } else {
+                            Log.d(LOG_TAG, "No change.");
+                        }
+
+                        moveView.setLeft((int) (startLeft + event.getRawX() - startX));
+                    }
+                }
+            }
+
+            final Handler longPressHandler = new Handler();
+            Runnable handleLongPress = new Runnable() {
+                public void run() {
+                    Log.i(LOG_TAG, "Long press!");
+                    suppressLongPress = false;
+                    deleteView.performLongClick();
+                    suppressLongPress = true;
+                }
+            };
+
+            private boolean handleActionDown(MotionEvent event) {
+                startX = event.getRawX();
+                startY = event.getRawY();
+                shouldDelete = false;
+                Rect rect = new Rect();
+                int childCount = boardingPassListView.getChildCount();
+                int[] listViewCoords = new int[2];
+                boardingPassListView.getLocationOnScreen(listViewCoords);
+                int x = (int) event.getRawX() - listViewCoords[0];
+                int y = (int) event.getRawY() - listViewCoords[1];
+                View child;
+                for (int i = 0; i < childCount; i++) {
+                    child = boardingPassListView.getChildAt(i);
+                    child.getHitRect(rect);
+                    if (rect.contains(x, y)) {
+                        deleteView = child;
+                        break;
+                    }
+                }
+                moveView = deleteView.findViewById(R.id.layout_imageListItem);
+                startLeft = deleteView.getLeft();
+                longPressHandler.postDelayed(handleLongPress, android.view.ViewConfiguration.getLongPressTimeout());
+                return false;
+            }
+        });
+    }
+
     private void initializeImageListClickListener() {
-        boardingPassListView.setOnItemClickListener(new OnItemClickListener() {
+        boardingPassListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //try {
                 if (imageAdapter.isEditing()) {
                     return;
                 }
@@ -169,36 +352,21 @@ public class WelcomeActivity extends AppCompatActivity {
                 Intent displayImage = new Intent(context, BoardingPassActivity.class);
                 displayImage.putExtra(BOARDING_PASS_EXTRA, imageAdapter.getItem(position).getImageUri());
                 startActivity(displayImage);
-               /*} catch (FileNotFoundException e) {
-                    imageAdapter.remove(imageAdapter.getItem(position));
-                    Toast.makeText(context, "The ticket image has been moved or deleted and cannot be displayed.", Toast.LENGTH_SHORT);
-                }*/
-
             }
         });
     }
 
     private void initializeImageListLongClickListener() {
-        boardingPassListView.setOnItemLongClickListener(new OnItemLongClickListener() {
+        boardingPassListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if (imageAdapter.isEditing()) {
+                if (imageAdapter.isEditing() || suppressLongPress) {
                     return false;
                 }
-                boolean consumed = imageAdapter.makeEditable(parent, view, position, id);
-
-                return consumed;
+                return imageAdapter.makeEditable(view, position);
             }
         });
     }
-
-    /*@Override
-    public void onBackPressed() {
-        if(imageAdapter.isEditing()) {
-            imageAdapter.stopEditing(boardingPassListView);
-        }
-        super.onBackPressed();
-    }*/
 
     void getImage() {
         Log.d(LOG_TAG, "The user will now select an image to view");

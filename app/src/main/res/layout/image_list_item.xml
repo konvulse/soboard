@@ -1,9 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:paddingTop="@dimen/image_list_item_padding"
     android:paddingBottom="@dimen/image_list_item_padding">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#c61a1a"
+        android:layout_centerVertical="true"
+        android:id="@+id/layout_deleteIndicator"
+        android:gravity="center_vertical|fill_vertical"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:paddingTop="45dp"
+        android:paddingBottom="45dp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageView"
+            android:src="@android:drawable/ic_menu_delete"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp" />
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
@@ -64,14 +86,7 @@
 
         </LinearLayout>
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/imageButton_deleteItem"
-            android:src="@android:drawable/ic_menu_delete"
-            android:visibility="gone"
-            android:contentDescription="@string/description_deleteTicket" />
-
     </LinearLayout>
 
-</LinearLayout>
+
+</RelativeLayout>

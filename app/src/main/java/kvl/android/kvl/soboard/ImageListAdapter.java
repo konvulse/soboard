@@ -7,10 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,11 +32,14 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        //TODO: convertView is causing issues with refreshing list after deleting items not at end of list
         View v = convertView;
-        if (v == null) {
+        //if (v == null) {
             LayoutInflater vi = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             v = vi.inflate(R.layout.image_list_item, null);
-        }
+        //} else {
+        //    View moveView = deleteView.findViewById(R.id.layout_imageListItem);
+        //}
 
         if (!this.isEmpty()) {
             ImageListItem item = this.getItem(position);
@@ -90,47 +91,32 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
         editPosition = position;
         editing = true;
         final TextView imageName = (TextView) v.findViewById(R.id.textView_imageName);
-        final ImageButton deleteButton = (ImageButton) v.findViewById(R.id.imageButton_deleteItem);
         final LinearLayout itemLayout = (LinearLayout) v.findViewById(R.id.layout_imageListItem);
 
         editName.setText(item.getName());
         imageName.setVisibility(View.GONE);
         editName.setVisibility(View.VISIBLE);
-        deleteButton.setVisibility(View.VISIBLE);
 
         if (editName.requestFocus()) {
             InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInputFromWindow(editName.getApplicationWindowToken(), InputMethodManager.SHOW_IMPLICIT, 0);
-
+            editName.selectAll();
             Log.d(LOG_TAG, "editName took focus");
         } else {
             Log.d(LOG_TAG, "editName did not take focus");
         }
 
-
         editName.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_ENTER) {
-                    endEdit(item, imageName, editName, deleteButton);
+                    endEdit(item, imageName, editName);
                     return true;
                 } else {
                     return false;
                 }
             }
         });
-
-        /*editName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_NULL || event == null || event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-                    endEdit(item, imageName, editName, deleteButton);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });*/
 
         itemLayout.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -138,33 +124,20 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
                 Log.d(LOG_TAG, "Handling focus change during item edit");
                 if (!hasFocus) {
                     Log.d(LOG_TAG, "Item lost focus");
-                    endEdit(item, imageName, editName, deleteButton);
+                    endEdit(item, imageName, editName);
                 } else {
                     Log.d(LOG_TAG, "Item gained focus");
                 }
 
             }
         });
-
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(LOG_TAG, "Clicked delete");
-                endEdit(item, imageName, editName, deleteButton);
-                item.removeFromDb();
-                remove(item);
-            }
-        });
-
-
     }
 
-    private void endEdit(ImageListItem item, TextView imageName, EditText editName, ImageButton deleteButton) {
+    private void endEdit(ImageListItem item, TextView imageName, EditText editName) {
         item.setName(editName.getText().toString());
         imageName.setText(item.getName());
         imageName.setVisibility(View.VISIBLE);
         editName.setVisibility(View.GONE);
-        deleteButton.setVisibility(View.GONE);
         editing = false;
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editName.getApplicationWindowToken(), InputMethodManager.HIDE_IMPLICIT_ONLY);
@@ -177,13 +150,12 @@ public class ImageListAdapter extends ArrayAdapter<ImageListItem> {
             if (item != null) {
                 final TextView imageName = (TextView) itemView.findViewById(R.id.textView_imageName);
                 final EditText editName = (EditText) itemView.findViewById(R.id.editText_imageName);
-                final ImageButton deleteButton = (ImageButton) itemView.findViewById(R.id.imageButton_deleteItem);
-                endEdit(item, imageName, editName, deleteButton);
+                endEdit(item, imageName, editName);
             }
         }
     }
 
-    public boolean makeEditable(AdapterView<?> parent, View view, int position, long id) {
+    public boolean makeEditable(View view, int position) {
         boolean alreadyEditing = editing;
 
         View v = view;
