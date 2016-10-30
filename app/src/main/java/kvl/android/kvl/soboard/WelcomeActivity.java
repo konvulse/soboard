@@ -164,7 +164,7 @@ public class WelcomeActivity extends AppCompatActivity {
     View deleteView;
     View moveView;
     boolean shouldDelete = false;
-    boolean boardingPassTouchMove = false;
+    boolean suppressLongPress = true;
     boolean scrolling = false;
     boolean sliding = false;
     private void initializeImageListTouchListener() {
@@ -218,7 +218,6 @@ public class WelcomeActivity extends AppCompatActivity {
                     }
                 }
 
-                boardingPassTouchMove = false;
                 sliding = false;
                 scrolling = false;
                 return returning;
@@ -262,7 +261,7 @@ public class WelcomeActivity extends AppCompatActivity {
                         Log.v(LOG_TAG, "Cancelling long press");
                         longPressHandler.removeCallbacks(handleLongPress);
 
-                        if (Math.abs(event.getRawY() - startY) > 20) {
+                        if (Math.abs(event.getRawY() - startY) > 10) {
                             Log.d(LOG_TAG, "User is scrolling the list");
                             scrolling = true;
                         } else {
@@ -275,10 +274,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 if(shouldDelete) moveView.setAlpha(0.25f);
                 else moveView.setAlpha(1f);
 
-                if (!boardingPassTouchMove && (event.getRawX() - startX) > 0) {
-                    Log.d(LOG_TAG, "Suppress long clicks");
-                    boardingPassTouchMove = true;
-                }
                 return returning || sliding;
             }
 
@@ -312,7 +307,9 @@ public class WelcomeActivity extends AppCompatActivity {
             Runnable handleLongPress = new Runnable() {
                 public void run() {
                     Log.i(LOG_TAG, "Long press!");
+                    suppressLongPress = false;
                     deleteView.performLongClick();
+                    suppressLongPress = true;
                 }
             };
 
@@ -365,7 +362,7 @@ public class WelcomeActivity extends AppCompatActivity {
         boardingPassListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if (imageAdapter.isEditing() || boardingPassTouchMove) {
+                if (imageAdapter.isEditing() || suppressLongPress) {
                     return false;
                 }
                 return imageAdapter.makeEditable(view, position);
