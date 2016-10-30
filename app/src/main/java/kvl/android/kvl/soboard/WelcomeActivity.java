@@ -138,11 +138,11 @@ public class WelcomeActivity extends AppCompatActivity {
 
             } catch (FileNotFoundException e) {
                 Log.w(LOG_TAG, "Image no longer exists at the saved URI. The ticket will not be displayed. Ticket will be removed from database.");
-                //TODO: Remove deleted tickets from database
                 ticketDb.delete(DatabaseSchema.TicketInfo.TABLE_NAME, DatabaseSchema.TicketInfo._ID + " = " + tickets.getLong(tickets.getColumnIndex(DatabaseSchema.TicketInfo._ID)), null);
             }
             tickets.moveToNext();
         }
+        tickets.close();
     }
 
     @Override
@@ -153,8 +153,10 @@ public class WelcomeActivity extends AppCompatActivity {
 
     private void rebuildFromBundle(Bundle state) {
         ArrayList<ImageListItem> savedImages = state.getParcelableArrayList(SAVED_IMAGE_LIST);
-        for(ImageListItem image: savedImages) {
-            imageAdapter.add(image);
+        if(savedImages != null) {
+            for (ImageListItem image : savedImages) {
+                imageAdapter.add(image);
+            }
         }
     }
 
@@ -244,9 +246,6 @@ public class WelcomeActivity extends AppCompatActivity {
             }
 
             private boolean handleActionMove(MotionEvent event) {
-                boolean returning;
-                returning = false;
-
                 if(scrolling) {
                     return false;
                 }
@@ -274,7 +273,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 if(shouldDelete) moveView.setAlpha(0.25f);
                 else moveView.setAlpha(1f);
 
-                return returning || sliding;
+                return sliding;
             }
 
             private void handleSwipe(MotionEvent event) {
@@ -314,8 +313,6 @@ public class WelcomeActivity extends AppCompatActivity {
             };
 
             private boolean handleActionDown(MotionEvent event) {
-                boolean returning;
-                returning = false;
                 startX = event.getRawX();
                 startY = event.getRawY();
                 shouldDelete = false;
@@ -337,7 +334,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 moveView = deleteView.findViewById(R.id.layout_imageListItem);
                 startLeft = deleteView.getLeft();
                 longPressHandler.postDelayed(handleLongPress, android.view.ViewConfiguration.getLongPressTimeout());
-                return returning;
+                return false;
             }
         });
     }
