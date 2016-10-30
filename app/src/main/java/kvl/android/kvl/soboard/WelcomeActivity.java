@@ -244,8 +244,6 @@ public class WelcomeActivity extends AppCompatActivity {
                             imageAdapter.remove(imageAdapter.getItem(deletePosition));
                         }
                     });
-                //imageAdapter.getItem(deletePosition).removeFromDb();
-                //imageAdapter.remove(imageAdapter.getItem(deletePosition));
             }
 
             private boolean handleActionMove(MotionEvent event) {
