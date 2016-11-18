@@ -1,4 +1,6 @@
 # So Board!
 Android app to help easily scan e-tickets 
 
-So Board! is reviewed on <a href="https://app-liv.com/"><img src=https://feed2go.com/wp-content/uploads/Reference-Logo-Feed2Go-jp-Appliv.png align="middle" width="100"></a>
+So Board! is reviewed on <a href="http://app-liv.com target="_blank"><img src="http://img.app-liv.com/link/appliv_xs_w.png" alt="Appliv -iPhone/Android App Discovery Website" /></a>  
+
+
